@@ -1,12 +1,56 @@
 (ns congo.shopping-cart
-  (:gen-class))
+  (:gen-class)
+  (:require
+   [donut.system :as ds]
+   [ring.adapter.jetty :as rj]
+   [reitit.ring :as ring]
+   [reitit.coercion.malli :as mcoercion]
+   [reitit.ring.coercion :as rrc]
+   [reitit.ring.middleware.parameters :as parameters]
+   [reitit.ring.middleware.muuntaja :as muuntaja]
+   [muuntaja.core :as m]))
 
-(defn greet
-  "Callable entry point to the application."
-  [data]
-  (println (str "Hello, " (or (:name data) "World") "!")))
+(defn app
+  []
+  (ring/ring-handler
+   (ring/router
+    [["/health" {:get {:handler (fn [_]
+                                  {:status 200
+                                   :body "healthy"})}}]
+     ["/video"
+      {:get
+       {:handler
+        (fn [_]
+          {:status  200
+           :headers {"Content-Type" "video/mp4"}
+           :body    "yes"})}}]]
+    {:data       {:coercion mcoercion/coercion
+                  :muuntaja   m/instance
+                  :middleware [parameters/parameters-middleware
+                               muuntaja/format-negotiate-middleware
+                               muuntaja/format-request-middleware
+                               muuntaja/format-response-middleware
+                               rrc/coerce-request-middleware
+                               rrc/coerce-response-middleware]}})))
+
+(def system
+  {::ds/defs
+   {:http
+    {:server #::ds{:start (fn [{:keys [::ds/config]}]
+                            (rj/run-jetty
+                             (app)
+                             {:port  (:port config)
+                              :join? false}))
+                   :stop  (fn [_ instance _]
+                            (.stop instance))
+                   :config  {:port 9000}}}}})
+
+(comment
+  (def running-system (ds/signal system ::ds/start))
+  (ds/signal running-system ::ds/stop))
 
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (greet {:name (first args)}))
+  (app {:name (first args)}))
+

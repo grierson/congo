@@ -10,20 +10,12 @@
    [reitit.ring.middleware.muuntaja :as muuntaja]
    [muuntaja.core :as m]))
 
-(defn app
-  []
+(def app
   (ring/ring-handler
    (ring/router
     [["/health" {:get {:handler (fn [_]
                                   {:status 200
-                                   :body "healthy"})}}]
-     ["/video"
-      {:get
-       {:handler
-        (fn [_]
-          {:status  200
-           :headers {"Content-Type" "video/mp4"}
-           :body    "yes"})}}]]
+                                   :body "healthy"})}}]]
     {:data       {:coercion mcoercion/coercion
                   :muuntaja   m/instance
                   :middleware [parameters/parameters-middleware
@@ -38,10 +30,10 @@
    {:http
     {:server #::ds{:start (fn [{:keys [::ds/config]}]
                             (rj/run-jetty
-                             (app)
+                             app
                              {:port  (:port config)
                               :join? false}))
-                   :stop  (fn [_ instance _]
+                   :stop  (fn [{:keys [::ds/instance]}]
                             (.stop instance))
                    :config  {:port 9000}}}}})
 

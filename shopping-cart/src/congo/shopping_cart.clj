@@ -15,7 +15,13 @@
    (ring/router
     [["/health" {:get {:handler (fn [_]
                                   {:status 200
-                                   :body "healthy"})}}]]
+                                   :body "healthy"})}}]
+
+     ["/shoppingcart"
+      ["/:id" {:get {:parameters {:path {:id int?}}
+                     :handler (fn [{{{:keys [id]} :path} :parameters}]
+                                {:status 200
+                                 :body {:user-id id}})}}]]]
     {:data       {:coercion mcoercion/coercion
                   :muuntaja   m/instance
                   :middleware [parameters/parameters-middleware
@@ -27,15 +33,24 @@
 
 (def system
   {::ds/defs
-   {:http
-    {:server #::ds{:start (fn [{:keys [::ds/config]}]
-                            (rj/run-jetty
-                             app
-                             {:port  (:port config)
-                              :join? false}))
-                   :stop  (fn [{:keys [::ds/instance]}]
-                            (.stop instance))
-                   :config  {:port 9000}}}}})
+   {:components {:shopping-cart-store #::ds{:start (fn [_] "start redis conn")
+                                            :stop (fn [{:keys [::ds/instance]}]
+                                                    (.stop instance))
+                                            :config {:address 2000}}}
+
+    :http {:handler
+           #::ds{:start  (fn [{:keys [::ds/config]}] app)
+                 :config {}}
+           :server
+           #::ds{:start (fn [{{:keys [handler port]} ::ds/config}]
+                          (rj/run-jetty
+                           handler
+                           {:port  port
+                            :join? false}))
+                 :stop  (fn [{:keys [::ds/instance]}]
+                          (.stop instance))
+                 :config  {:handler (ds/local-ref [:handler])
+                           :port 9000}}}}})
 
 (comment
   (def running-system (ds/signal system ::ds/start))

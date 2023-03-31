@@ -2,7 +2,9 @@
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         party.donut/system {:mvn/version "0.0.195"}
         ring/ring {:mvn/version "1.9.6"}
-        metosin/reitit {:mvn/version "0.6.0"}}
+        metosin/reitit {:mvn/version "0.6.0"}
+        metosin/jsonista {:mvn/version "0.3.7"}
+        com.taoensso/carmine {:mvn/version "3.3.0-alpha7"}}
  :aliases
  {:run-m {:main-opts ["-m" "congo.shopping-cart"]}
   :run-x {:ns-default congo.shopping-cart
@@ -12,10 +14,10 @@
                  {:git/tag "v0.9.2" :git/sha "fe6b140"}}
           :ns-default build}
   :repl {:extra-deps {nrepl/nrepl       {:mvn/version "0.9.0"}
-                cider/cider-nrepl {:mvn/version "0.28.4"}}
-   :main-opts  ["-m" "nrepl.cmdline"
-                "--middleware" "[cider.nrepl/cider-middleware]"
-                "--interactive"]}
+                      cider/cider-nrepl {:mvn/version "0.28.4"}}
+         :main-opts  ["-m" "nrepl.cmdline"
+                      "--middleware" "[cider.nrepl/cider-middleware]"
+                      "--interactive"]}
   :test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
                       io.github.cognitect-labs/test-runner

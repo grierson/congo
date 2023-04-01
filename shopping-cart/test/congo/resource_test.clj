@@ -1,15 +1,14 @@
-(ns congo.shopping-cart-test
+(ns congo.resource-test
   (:require [clojure.test :refer [deftest is testing]]
-            [freeport.core :refer [get-free-port!]]
-            [congo.shopping-cart :refer [app]]
+            [congo.resource :refer [app]]
             [jsonista.core :as j]
             [taoensso.carmine :as car :refer [wcar]])
   (:import (com.github.fppt.jedismock RedisServer)))
 
 (def server (RedisServer/newRedisServer))
+(.start server)
 (def redis-host (.getHost server))
 (def redis-port (.getBindPort server))
-(.start server)
 (def redis-url (str "redis://" redis-host ":" redis-port))
 
 (def my-wcar-opts
@@ -33,8 +32,7 @@
       (testing "returns 200"
         (is (= 200 (:status request))))
       (testing "body"
-        (is (= {:user-id 42
-                :items [{:name "t-shirt"}]}
+        (is (= {:user-id 42}
                (-> request
                    :body
                    slurp

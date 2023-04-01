@@ -21,12 +21,22 @@
                        :spec {:uri redis-url}}))
            :stop (fn [{:keys [::ds/instance]}]
                    (.stop instance))
-           :config {:address 2000}}}
+           :config {:address 2000}}
+
+     :product-catalog-gateway
+     #::ds {:start (fn [_] {:1 {:name "tshirt"}
+                            :2 {:name "pant"}
+                            :3 {:name "hat"}})}}
 
     :http
     {:handler
-     #::ds{:start  (fn [{{:keys [store]} ::ds/config}] (resource/app store))
-           :config {:store (ds/ref [:components :shopping-cart-store])}}
+     #::ds{:start  (fn [{{:keys [shopping-cart-store
+                                 product-catalog-gateway]} ::ds/config}]
+                     (resource/app
+                      shopping-cart-store
+                      product-catalog-gateway))
+           :config {:shopping-cart-store (ds/ref [:components :shopping-cart-store])
+                    :product-catalog-gateway (ds/ref [:components :product-catalog-gateway])}}
 
      :server
      #::ds{:start (fn [{{:keys [handler options]} ::ds/config}]

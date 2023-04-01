@@ -3,6 +3,7 @@
         party.donut/system {:mvn/version "0.0.195"}
         ring/ring {:mvn/version "1.9.6"}
         metosin/reitit {:mvn/version "0.6.0"}
+        metosin/malli {:mvn/version "0.10.4"}
         metosin/jsonista {:mvn/version "0.3.7"}
         com.taoensso/carmine {:mvn/version "3.3.0-alpha7"}}
  :aliases

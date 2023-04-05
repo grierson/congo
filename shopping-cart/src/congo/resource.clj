@@ -14,26 +14,40 @@
   [shopping-cart-store product-catalog-gateway]
   (ring/ring-handler
    (ring/router
-    [["/health" {:get {:handler (fn [_]
-                                  {:status 200
-                                   :body "healthy"})}}]
+    [["/health" {:get
+                 {:handler (fn [_]
+                             {:status 200
+                              :body "healthy"})}}]
      ["/shoppingcart"
-      ["/:id" {:get {:parameters {:path {:id int?}}
-                     :handler (fn [{{{:keys [id]} :path} :parameters}]
-                                (let [cart (shopping-cart/get-cart shopping-cart-store id)]
-                                  {:status 200
-                                   :body cart}))}}]
-      ["/:id/items" {:post {:parameters {:path {:id int?}
-                                         :body {:product-ids (l/vector int?)}}
-                            :handler (fn [{:keys [parameters]}]
-                                       (let [id (-> parameters :path :id)
-                                             product-ids (-> parameters :body :product-ids)
-                                             cart (shopping-cart/get-cart shopping-cart-store id)
-                                             products (product-catalog/get-products product-catalog-gateway product-ids)
-                                             new-cart (shopping-cart/add-items cart products)
-                                             _ (shopping-cart/save-cart shopping-cart-store new-cart)]
-                                         {:status 200
-                                          :body new-cart}))}}]]]
+      ["/:id" {:get
+               {:parameters {:path {:id int?}}
+                :handler (fn [{{{:keys [id]} :path} :parameters}]
+                           (let [cart (shopping-cart/get-cart shopping-cart-store id)]
+                             {:status 200
+                              :body cart}))}}]
+      ["/:id/items" {:post
+                     {:parameters {:path {:id int?}
+                                   :body {:product-ids (l/vector int?)}}
+                      :handler (fn [{:keys [parameters]}]
+                                 (let [id (-> parameters :path :id)
+                                       product-ids (-> parameters :body :product-ids)
+                                       cart (shopping-cart/get-cart shopping-cart-store id)
+                                       products (product-catalog/get-products product-catalog-gateway product-ids)
+                                       new-cart (shopping-cart/add-items cart products)
+                                       _ (shopping-cart/save-cart shopping-cart-store new-cart)]
+                                   {:status 200
+                                    :body new-cart}))}
+                     :delete
+                     {:parameters {:path {:id int?}
+                                   :body {:product-ids (l/vector int?)}}
+                      :handler (fn [{:keys [parameters]}]
+                                 (let [id (-> parameters :path :id)
+                                       product-ids (-> parameters :body :product-ids)
+                                       cart (shopping-cart/get-cart shopping-cart-store id)
+                                       new-cart (shopping-cart/delete-items cart product-ids)
+                                       _ (shopping-cart/save-cart shopping-cart-store new-cart)]
+                                   {:status 200
+                                    :body new-cart}))}}]]]
     {:data       {:coercion mcoercion/coercion
                   :muuntaja   m/instance
                   :middleware [parameters/parameters-middleware

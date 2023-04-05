@@ -1,6 +1,7 @@
 (ns congo.resource-test
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [congo.resource :refer [app]]
+            [congo.shopping-cart :as shopping-cart]
             [jsonista.core :as j]
             [taoensso.carmine :as car :refer [wcar]])
   (:import (com.github.fppt.jedismock RedisServer)))
@@ -44,22 +45,60 @@
                  (-> request
                      :body
                      slurp
-                     (j/read-value j/keyword-keys-object-mapper)))))))))
+                     (j/read-value j/keyword-keys-object-mapper)))))
+        (testing "shopping cart contains new item"
+          (is (= {:user-id cart-id
+                  :items []}
+                 (shopping-cart/get-cart shopping-cart-store cart-id))))))))
 
 (deftest POST-cart-test
-  (let [sut (app shopping-cart-store {1 {:product-catalog-id 1
-                                         :product-name "t-shirt"}})]
-    (testing "GET returns cart"
+  (let [product-id 1
+        t-shirt {:product-catalog-id product-id
+                 :product-name "t-shirt"}
+        sut (app shopping-cart-store {product-id t-shirt})]
+    (testing "POST adds item to cart"
       (let [request (sut {:request-method :post
                           :uri (str  "/shoppingcart/" cart-id "/items")
-                          :body-params {:product-ids [1]}})]
+                          :body-params {:product-ids [product-id]}})]
         (testing "returns 200"
           (is (= 200 (:status request))))
         (testing "body"
           (is (= {:user-id cart-id
-                  :items [{:product-catalog-id 1
+                  :items [{:product-catalog-id product-id
                            :product-name "t-shirt"}]}
                  (-> request
                      :body
                      slurp
-                     (j/read-value j/keyword-keys-object-mapper)))))))))
+                     (j/read-value j/keyword-keys-object-mapper)))))
+        (testing "shopping cart contains new item"
+          (is (= t-shirt
+                 (-> (shopping-cart/get-cart shopping-cart-store cart-id)
+                     :items
+                     first))))))))
+
+(deftest DELETE-cart-test
+  (let [product-id 1
+        t-shirt {:product-catalog-id product-id
+                 :product-name "t-shirt"}
+        cart (shopping-cart/get-cart shopping-cart-store cart-id)
+        cart (shopping-cart/add-items cart [t-shirt])
+        _ (shopping-cart/save-cart shopping-cart-store cart)
+        sut (app shopping-cart-store nil)]
+    (testing "DELETE removes item from cart"
+      (let [request (sut {:request-method :delete
+                          :uri (str  "/shoppingcart/" cart-id "/items")
+                          :body-params {:product-ids [product-id]}})
+            _ (prn request)]
+        (testing "returns 200"
+          (is (= 200 (:status request))))
+        (testing "body"
+          (is (= {:user-id cart-id
+                  :items []}
+                 (-> request
+                     :body
+                     slurp
+                     (j/read-value j/keyword-keys-object-mapper)))))
+        (testing "shopping cart contains no items"
+          (is (= []
+                 (-> (shopping-cart/get-cart shopping-cart-store cart-id)
+                     :items))))))))

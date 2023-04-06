@@ -32,9 +32,8 @@
     {:handler
      #::ds{:start  (fn [{{:keys [shopping-cart-store
                                  product-catalog-gateway]} ::ds/config}]
-                     (resource/app
-                      shopping-cart-store
-                      product-catalog-gateway))
+                     (resource/app {:shopping-cart-store shopping-cart-store
+                                    :product-catalog-gateway product-catalog-gateway}))
            :config {:shopping-cart-store (ds/ref [:components :shopping-cart-store])
                     :product-catalog-gateway (ds/ref [:components :product-catalog-gateway])}}
 

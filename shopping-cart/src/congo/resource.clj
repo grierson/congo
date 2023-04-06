@@ -11,7 +11,7 @@
    [congo.product-catalog :as product-catalog]))
 
 (defn app
-  [shopping-cart-store product-catalog-gateway]
+  [{:keys [shopping-cart-store product-catalog-gateway]}]
   (ring/ring-handler
    (ring/router
     [["/health" {:get

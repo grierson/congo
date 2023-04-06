@@ -26,7 +26,7 @@
 (use-fixtures :each test-fixture)
 
 (deftest health-test
-  (let [sut (app nil nil)]
+  (let [sut (app {})]
     (testing "Calling health returns 200"
       (is (= {:status 200
               :body  "healthy"}
@@ -34,7 +34,7 @@
                    :uri "/health"}))))))
 
 (deftest GET-cart-test
-  (let [sut (app shopping-cart-store nil)]
+  (let [sut (app {:shopping-cart-store shopping-cart-store})]
     (testing "GET returns cart"
       (let [request (sut {:request-method :get :uri (str  "/shoppingcart/" cart-id)})]
         (testing "returns 200"
@@ -55,7 +55,8 @@
   (let [product-id 1
         t-shirt {:product-catalog-id product-id
                  :product-name "t-shirt"}
-        sut (app shopping-cart-store {product-id t-shirt})]
+        sut (app {:shopping-cart-store  shopping-cart-store
+                  :product-catalog-gateway {product-id t-shirt}})]
     (testing "POST adds item to cart"
       (let [request (sut {:request-method :post
                           :uri (str  "/shoppingcart/" cart-id "/items")
@@ -83,12 +84,11 @@
         cart (shopping-cart/get-cart shopping-cart-store cart-id)
         cart (shopping-cart/add-items cart [t-shirt])
         _ (shopping-cart/save-cart shopping-cart-store cart)
-        sut (app shopping-cart-store nil)]
+        sut (app {:shopping-cart-store shopping-cart-store})]
     (testing "DELETE removes item from cart"
       (let [request (sut {:request-method :delete
                           :uri (str  "/shoppingcart/" cart-id "/items")
-                          :body-params {:product-ids [product-id]}})
-            _ (prn request)]
+                          :body-params {:product-ids [product-id]}})]
         (testing "returns 200"
           (is (= 200 (:status request))))
         (testing "body"

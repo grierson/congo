@@ -3,6 +3,7 @@
             [congo.resource :refer [app]]
             [congo.shopping-cart :as shopping-cart]
             [jsonista.core :as j]
+            [congo.event-store :as events]
             [taoensso.carmine :as car :refer [wcar]])
   (:import (com.github.fppt.jedismock RedisServer)))
 
@@ -26,6 +27,7 @@
 (defn test-fixture [f]
   (clear-tkeys!)
   (reset! event-store [])
+  (reset! events/counter 0)
   (f))
 
 (use-fixtures :each test-fixture)
@@ -37,6 +39,29 @@
               :body  "healthy"}
              (sut {:request-method :get
                    :uri "/health"}))))))
+(deftest events-test
+  (let [product-id 1
+        product-name "t-shirt"
+        t-shirt {:product-catalog-id product-id
+                 :product-name product-name}
+        product-catalog-gateway {product-id t-shirt}
+        sut (app {:shopping-cart-store shopping-cart-store
+                  :product-catalog-gateway product-catalog-gateway
+                  :event-store event-store})
+        _ (sut {:request-method :post
+                :uri (str  "/shoppingcart/" cart-id "/items")
+                :body-params {:product-ids [product-id]}})
+        request (sut {:request-method :get
+                      :uri "/events"})]
+    (testing "Calling events returns 200"
+      (is (= 200 (:status request))))
+    (testing "Contains events"
+      (is (= 1
+             (-> request
+                 :body
+                 slurp
+                 (j/read-value j/keyword-keys-object-mapper)
+                 count))))))
 
 (deftest GET-cart-test
   (let [sut (app {:shopping-cart-store shopping-cart-store})]

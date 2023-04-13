@@ -6,7 +6,7 @@
   (atom []))
 
 (defn get-events [store start end]
-  (subvec @store start end))
+  @store)
 
 (defn now [] (new java.util.Date))
 

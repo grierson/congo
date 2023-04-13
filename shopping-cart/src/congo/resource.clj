@@ -8,7 +8,8 @@
    [reitit.ring.middleware.muuntaja :as muuntaja]
    [muuntaja.core :as m]
    [congo.shopping-cart :as shopping-cart]
-   [congo.product-catalog :as product-catalog]))
+   [congo.product-catalog :as product-catalog]
+   [congo.event-store :as events]))
 
 (defn app
   [{:keys [shopping-cart-store product-catalog-gateway event-store]}]
@@ -18,6 +19,14 @@
                  {:handler (fn [_]
                              {:status 200
                               :body "healthy"})}}]
+     ["/events" {:get
+                 {:parameters {:query {:start (l/optional int?)
+                                       :end  (l/optional int?)}}
+                  :handler (fn [{{{:keys [start end]
+                                   :or {start 0
+                                        end (+ start 10)}} :query} :parameters}]
+                             {:status 200
+                              :body (events/get-events event-store start end)})}}]
      ["/shoppingcart"
       ["/:id" {:get
                {:parameters {:path {:id int?}}

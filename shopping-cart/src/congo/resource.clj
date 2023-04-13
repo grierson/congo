@@ -11,7 +11,7 @@
    [congo.product-catalog :as product-catalog]))
 
 (defn app
-  [{:keys [shopping-cart-store product-catalog-gateway]}]
+  [{:keys [shopping-cart-store product-catalog-gateway event-store]}]
   (ring/ring-handler
    (ring/router
     [["/health" {:get
@@ -33,7 +33,7 @@
                                        product-ids (-> parameters :body :product-ids)
                                        cart (shopping-cart/get-cart shopping-cart-store id)
                                        products (product-catalog/get-products product-catalog-gateway product-ids)
-                                       new-cart (shopping-cart/add-items cart products)
+                                       new-cart (shopping-cart/add-items event-store cart products)
                                        _ (shopping-cart/save-cart shopping-cart-store new-cart)]
                                    {:status 200
                                     :body new-cart}))}
@@ -44,7 +44,7 @@
                                  (let [id (-> parameters :path :id)
                                        product-ids (-> parameters :body :product-ids)
                                        cart (shopping-cart/get-cart shopping-cart-store id)
-                                       new-cart (shopping-cart/delete-items cart product-ids)
+                                       new-cart (shopping-cart/delete-items event-store cart product-ids)
                                        _ (shopping-cart/save-cart shopping-cart-store new-cart)]
                                    {:status 200
                                     :body new-cart}))}}]]]

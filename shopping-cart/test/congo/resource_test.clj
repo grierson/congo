@@ -21,7 +21,12 @@
 (defn clear-tkeys! []
   (wcar shopping-cart-store (car/del cart-id)))
 
-(defn test-fixture [f] (clear-tkeys!) (f) (clear-tkeys!))
+(def event-store (atom []))
+
+(defn test-fixture [f]
+  (clear-tkeys!)
+  (reset! event-store [])
+  (f))
 
 (use-fixtures :each test-fixture)
 
@@ -36,7 +41,8 @@
 (deftest GET-cart-test
   (let [sut (app {:shopping-cart-store shopping-cart-store})]
     (testing "GET returns cart"
-      (let [request (sut {:request-method :get :uri (str  "/shoppingcart/" cart-id)})]
+      (let [request (sut {:request-method :get
+                          :uri (str  "/shoppingcart/" cart-id)})]
         (testing "returns 200"
           (is (= 200 (:status request))))
         (testing "body"
@@ -46,17 +52,20 @@
                      :body
                      slurp
                      (j/read-value j/keyword-keys-object-mapper)))))
-        (testing "shopping cart contains new item"
+        (testing "shopping cart store contains cart"
           (is (= {:user-id cart-id
                   :items []}
                  (shopping-cart/get-cart shopping-cart-store cart-id))))))))
 
 (deftest POST-cart-test
   (let [product-id 1
+        product-name "t-shirt"
         t-shirt {:product-catalog-id product-id
-                 :product-name "t-shirt"}
+                 :product-name product-name}
+        product-catalog-gateway {product-id t-shirt}
         sut (app {:shopping-cart-store  shopping-cart-store
-                  :product-catalog-gateway {product-id t-shirt}})]
+                  :product-catalog-gateway product-catalog-gateway
+                  :event-store event-store})]
     (testing "POST adds item to cart"
       (let [request (sut {:request-method :post
                           :uri (str  "/shoppingcart/" cart-id "/items")
@@ -66,7 +75,7 @@
         (testing "body"
           (is (= {:user-id cart-id
                   :items [{:product-catalog-id product-id
-                           :product-name "t-shirt"}]}
+                           :product-name product-name}]}
                  (-> request
                      :body
                      slurp
@@ -75,16 +84,61 @@
           (is (= t-shirt
                  (-> (shopping-cart/get-cart shopping-cart-store cart-id)
                      :items
-                     first))))))))
+                     first))))
+        (testing "event store contains items"
+          (is (= 1 (count @event-store))))))))
+
+(deftest POST-multiple-cart-test
+  (let [product-id-1 1
+        product-name-1 "t-shirt"
+        product-id-2 2
+        product-name-2 "pants"
+        t-shirt {:product-catalog-id product-id-1
+                 :product-name product-name-1}
+        pants {:product-catalog-id product-id-2
+               :product-name product-name-2}
+        product-catalog-gateway {product-id-1 t-shirt
+                                 product-id-2 pants}
+        sut (app {:shopping-cart-store  shopping-cart-store
+                  :product-catalog-gateway product-catalog-gateway
+                  :event-store event-store})]
+    (testing "POST adds item to cart"
+      (let [request (sut {:request-method :post
+                          :uri (str  "/shoppingcart/" cart-id "/items")
+                          :body-params {:product-ids [product-id-1 product-id-2]}})]
+        (testing "returns 200"
+          (is (= 200 (:status request))))
+        (testing "body"
+          (is (= {:user-id cart-id
+                  :items [{:product-catalog-id product-id-1
+                           :product-name product-name-1}
+                          {:product-catalog-id product-id-2
+                           :product-name product-name-2}]}
+                 (-> request
+                     :body
+                     slurp
+                     (j/read-value j/keyword-keys-object-mapper)))))
+        (testing "shopping cart contains new item"
+          (is (= t-shirt
+                 (-> (shopping-cart/get-cart shopping-cart-store cart-id)
+                     :items
+                     first)))
+          (is (= pants
+                 (-> (shopping-cart/get-cart shopping-cart-store cart-id)
+                     :items
+                     second))))
+        (testing "event store contains items"
+          (is (= 2 (count @event-store))))))))
 
 (deftest DELETE-cart-test
   (let [product-id 1
         t-shirt {:product-catalog-id product-id
                  :product-name "t-shirt"}
         cart (shopping-cart/get-cart shopping-cart-store cart-id)
-        cart (shopping-cart/add-items cart [t-shirt])
+        cart (shopping-cart/add-items event-store cart [t-shirt])
         _ (shopping-cart/save-cart shopping-cart-store cart)
-        sut (app {:shopping-cart-store shopping-cart-store})]
+        sut (app {:shopping-cart-store shopping-cart-store
+                  :event-store event-store})]
     (testing "DELETE removes item from cart"
       (let [request (sut {:request-method :delete
                           :uri (str  "/shoppingcart/" cart-id "/items")
@@ -101,4 +155,7 @@
         (testing "shopping cart contains no items"
           (is (= []
                  (-> (shopping-cart/get-cart shopping-cart-store cart-id)
-                     :items))))))))
+                     :items))))
+        (testing "event store contains add and delete events"
+          (is (= 2
+                 (count @event-store))))))))

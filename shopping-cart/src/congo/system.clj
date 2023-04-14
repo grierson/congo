@@ -3,7 +3,8 @@
             [ring.adapter.jetty :as rj]
             [congo.resource :as resource]
             [taoensso.carmine :as car :refer [wcar]]
-            [congo.event-store :as events])
+            [congo.event-store :as events]
+            [congo.shopping-cart :as shopping-cart])
   (:import (com.github.fppt.jedismock RedisServer)))
 
 (def base-system
@@ -15,14 +16,7 @@
      #::ds {:start (fn [_] (events/make-store))}
 
      :shopping-cart-store
-     #::ds{:start (fn [_]
-                    (let [server (RedisServer/newRedisServer)
-                          _ (.start server)
-                          redis-host (.getHost server)
-                          redis-port (.getBindPort server)
-                          redis-url (str "redis://" redis-host ":" redis-port)]
-                      {:pool (car/connection-pool {})
-                       :spec {:uri redis-url}}))
+     #::ds{:start (fn [_] (shopping-cart/make-store))
            :stop (fn [{:keys [::ds/instance]}]
                    (.stop instance))
            :config {:address 2000}}

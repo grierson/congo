@@ -1,15 +1,42 @@
-(ns congo.event-store)
+(ns congo.event-store
+  (:require [next.jdbc :as jdbc]
+            [next.jdbc.sql :as sql]))
 
-(def counter (atom 0))
+(defn make-store [name]
+  (let [db {:dbtype "h2" :dbname name}
+        ds (jdbc/get-datasource db)]
+    (jdbc/execute!
+     ds
+     ["create table events (
+      id UUID NOT NULL DEFAULT random_uuid() PRIMARY KEY,
+      position int auto_increment,
+      type varchar(32),
+      data varchar (255),
+      timestamp datetime default CURRENT_TIMESTAMP)"])
+    ds))
 
-(defn make-store []
-  (atom []))
+(defn kill-store [ds]
+  (jdbc/execute! ds ["drop table events"]))
 
-(defn get-events [store start end]
-  @store)
+(comment
+  (jdbc/execute!
+   ds
+   ["create table events (
+   id UUID NOT NULL DEFAULT random_uuid() PRIMARY KEY,
+   position int auto_increment,
+   type varchar(32),
+   data varchar (255),
+   timestamp datetime default CURRENT_TIMESTAMP)"])
+  (jdbc/execute! ds ["drop table events"])
+  (sql/insert! ds :events {:type "ItemAddedToCart" :data (str {:id 1 :cart 2})})
+  (sql/insert! ds :events {:type "ItemAddedToCart" :data (str {:id 9 :cart 4})})
+  (sql/query ds ["select * from events"])
+  (sql/query ds ["SELECT * FROM events WHERE position BETWEEN ? AND ?" 1 1]))
 
-(defn now [] (new java.util.Date))
+(defn get-events
+  [store start end]
+  (sql/query store ["SELECT * FROM events WHERE position BETWEEN ? AND ?" start end]))
 
-(defn raise [store event]
-  (swap! store conj (merge  event {:timestamp (now) :order @counter}))
-  (swap! counter inc))
+(defn raise
+  [store type data]
+  (sql/insert! store :events {:type type :data (str data)}))

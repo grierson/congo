@@ -5,10 +5,13 @@
   (:import
    [com.github.fppt.jedismock RedisServer]))
 
-(defn make-store []
+(defn make-server []
   (let [server (RedisServer/newRedisServer)
-        _ (.start server)
-        redis-host (.getHost server)
+        _ (.start server)]
+    server))
+
+(defn make-store [server]
+  (let [redis-host (.getHost server)
         redis-port (.getBindPort server)
         redis-url (str "redis://" redis-host ":" redis-port)]
     {:pool (car/connection-pool {})

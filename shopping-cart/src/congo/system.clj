@@ -2,10 +2,9 @@
   (:require [donut.system :as ds]
             [ring.adapter.jetty :as rj]
             [congo.resource :as resource]
-            [taoensso.carmine :as car :refer [wcar]]
             [congo.event-store :as events]
-            [congo.shopping-cart :as shopping-cart])
-  (:import (com.github.fppt.jedismock RedisServer)))
+            [congo.shopping-cart :as shopping-cart]
+            [congo.product-catalog :as product-catalog]))
 
 (def base-system
   {::ds/defs
@@ -13,18 +12,22 @@
 
     :components
     {:event-store
-     #::ds {:start (fn [_] (events/make-store))}
+     #::ds{:start (fn [_] (events/make-store))
+           :stop (fn [{:keys [::ds/instance]}]
+                   (events/kill-store instance))}
+     :shopping-cart-server
+     #::ds {:start (fn [_] (shopping-cart/make-server))
+            :stop (fn [{:keys [::ds/instance]}]
+                    (.stop instance))
+            :config {:address 2000}}
 
      :shopping-cart-store
-     #::ds{:start (fn [_] (shopping-cart/make-store))
-           :stop (fn [{:keys [::ds/instance]}]
-                   (.stop instance))
-           :config {:address 2000}}
+     #::ds{:start (fn [{{:keys [shopping-cart-server]} ::ds/config}]
+                    (shopping-cart/make-store shopping-cart-server))
+           :config {:shopping-cart-server (ds/ref [:components :shopping-cart-server])}}
 
      :product-catalog-gateway
-     #::ds {:start (fn [_] {1 {:name "tshirt"}
-                            2 {:name "pant"}
-                            3 {:name "hat"}})}}
+     #::ds {:start (product-catalog/make-store)}}
 
     :http
     {:handler
@@ -47,19 +50,16 @@
                      :options {:port (ds/ref [:env :http-port])
                                :join? false}}}}}})
 
-(defmethod ds/named-system :base
+(defmethod ds/named-system ::base
   [_]
   base-system)
 
-(defmethod ds/named-system :dev
+(defmethod ds/named-system ::test
   [_]
-  (ds/system :base {[:env] "value"}))
-
-(defmethod ds/named-system :test
-  [_]
-  (ds/system :dev {[:http :server] ::disabled}))
+  (ds/system ::base {[:http :server] ::disabled}))
 
 (comment
-  (def system (ds/start :base))
+  (def system (ds/start ::test))
+  (println (get-in system [::ds/instances :http :handler]))
   (ds/stop system))
 

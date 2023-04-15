@@ -45,8 +45,7 @@
         (is (= 1
                (count (request->map request))))))
     (testing "Contains events"
-      (let [events (events/get-events event-store)
-            event (first events)]
+      (let [[event :as events] (events/get-events event-store)]
         (is (= 1 (count events)))
         (is (= "ShoppingCartItemAdded" (:EVENTS/TYPE event)))))))
 
@@ -69,8 +68,11 @@
           (is (= expected
                  (shopping-cart/get-cart shopping-cart-store shopping-cart-id))))))))
 
-(deftest POST-cart-test
-  (let [{:keys [handler shopping-cart-store product-catalog-gateway]} (extract ds/*system*)
+(deftest POST-cart-item-test
+  (let [{:keys [handler
+                shopping-cart-store
+                product-catalog-gateway
+                event-store]} (extract ds/*system*)
         cart-id 1
         product-id 1
         request (handler {:request-method :post
@@ -87,10 +89,14 @@
                (request->map request)))))
     (testing "Shopping cart store"
       (is (= expected
-             (shopping-cart/get-cart shopping-cart-store cart-id))))))
+             (shopping-cart/get-cart shopping-cart-store cart-id))))
+    (testing "Contains events"
+      (let [[event :as events] (events/get-events event-store)]
+        (is (= 1 (count events)))
+        (is (= "ShoppingCartItemAdded" (:EVENTS/TYPE event)))))))
 
-(deftest POST-multiple-cart-test
-  (let [{:keys [handler shopping-cart-store product-catalog-gateway]} (extract ds/*system*)
+(deftest POST-multiple-cart-items-test
+  (let [{:keys [handler shopping-cart-store product-catalog-gateway event-store]} (extract ds/*system*)
         cart-id 1
         product-id-1 1
         product-id-2 2
@@ -107,12 +113,20 @@
         (is (= expected (request->map request)))))
     (testing "Shopping cart store"
       (is (= expected
-             (shopping-cart/get-cart shopping-cart-store cart-id))))))
+             (shopping-cart/get-cart shopping-cart-store cart-id))))
+    (testing "Contains events"
+      (let [[first-event second-event :as events] (events/get-events event-store)]
+        (is (= 2 (count events)))
+        (is (= "ShoppingCartItemAdded" (:EVENTS/TYPE first-event)))
+        (is (= "ShoppingCartItemAdded" (:EVENTS/TYPE second-event)))))))
 
-(deftest DELETE-cart-test
-  (let [{:keys [handler shopping-cart-store]} (extract ds/*system*)
+(deftest DELETE-cart-item-test
+  (let [{:keys [handler shopping-cart-store event-store]} (extract ds/*system*)
         cart-id 1
         product-id 1
+        _ (handler {:request-method :post
+                    :uri (str  "/shoppingcart/" cart-id "/items")
+                    :body-params {:product-ids [product-id]}})
         request (handler {:request-method :delete
                           :uri (str  "/shoppingcart/" cart-id "/items")
                           :body-params {:product-ids [product-id]}})
@@ -125,4 +139,9 @@
         (is (= expected (request->map request)))))
     (testing "Shopping cart store"
       (is (= expected
-             (shopping-cart/get-cart shopping-cart-store cart-id))))))
+             (shopping-cart/get-cart shopping-cart-store cart-id))))
+    (testing "Contains events"
+      (let [[first-event second-event :as events] (events/get-events event-store)]
+        (is (= 2 (count events)))
+        (is (= "ShoppingCartItemAdded" (:EVENTS/TYPE first-event)))
+        (is (= "ShoppingCartItemRemoved" (:EVENTS/TYPE second-event)))))))

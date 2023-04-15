@@ -10,8 +10,20 @@
 
 (use-fixtures :each (ds/system-fixture ::system/test))
 
+(defn extract [system]
+  {:handler (get-in system [::ds/instances :http :handler])
+   :event-store (get-in system [::ds/instances :components :event-store])
+   :shopping-cart-store (get-in system [::ds/instances :components :shopping-cart-store])
+   :product-catalog-gateway (get-in system [::ds/instances :components :product-catalog-gateway])})
+
+(defn request->map [request]
+  (-> request
+      :body
+      slurp
+      (j/read-value j/keyword-keys-object-mapper)))
+
 (deftest health-test
-  (let [handler (get-in ds/*system* [::ds/instances :http :handler])
+  (let [{:keys [handler]} (extract ds/*system*)
         request (handler {:request-method :get
                           :uri "/health"})]
     (testing "Calling health returns 200"
@@ -20,8 +32,7 @@
              request)))))
 
 (deftest events-test
-  (let [handler (get-in ds/*system* [::ds/instances :http :handler])
-        event-store (get-in ds/*system* [::ds/instances :components :event-store])
+  (let [{:keys [handler event-store]} (extract ds/*system*)
         _ (handler {:request-method :post
                     :uri (str  "/shoppingcart/" 1 "/items")
                     :body-params {:product-ids [1]}})
@@ -32,11 +43,7 @@
         (is (= 200 (:status request))))
       (testing "Contains events"
         (is (= 1
-               (-> request
-                   :body
-                   slurp
-                   (j/read-value j/keyword-keys-object-mapper)
-                   count)))))
+               (count (request->map request))))))
     (testing "Contains events"
       (let [events (events/get-events event-store)
             event (first events)]
@@ -44,8 +51,7 @@
         (is (= "ShoppingCartItemAdded" (:EVENTS/TYPE event)))))))
 
 (deftest GET-cart-test
-  (let [handler (get-in ds/*system* [::ds/instances :http :handler])
-        shopping-cart-store (get-in ds/*system* [::ds/instances :components :shopping-cart-store])
+  (let [{:keys [handler shopping-cart-store]} (extract ds/*system*)
         shopping-cart-id 1
         expected {:user-id 1
                   :items []}]
@@ -58,18 +64,13 @@
           (testing "body"
             (is (= {:user-id 1
                     :items []}
-                   (-> request
-                       :body
-                       slurp
-                       (j/read-value j/keyword-keys-object-mapper))))))
+                   (request->map request)))))
         (testing "store"
           (is (= expected
                  (shopping-cart/get-cart shopping-cart-store shopping-cart-id))))))))
 
 (deftest POST-cart-test
-  (let [handler (get-in ds/*system* [::ds/instances :http :handler])
-        shopping-cart-store (get-in ds/*system* [::ds/instances :components :shopping-cart-store])
-        product-catalog-gateway (get-in ds/*system* [::ds/instances :components :product-catalog-gateway])
+  (let [{:keys [handler shopping-cart-store product-catalog-gateway]} (extract ds/*system*)
         cart-id 1
         product-id 1
         request (handler {:request-method :post
@@ -83,18 +84,13 @@
         (is (= 200 (:status request))))
       (testing "returns body"
         (is (= expected
-               (-> request
-                   :body
-                   slurp
-                   (j/read-value j/keyword-keys-object-mapper))))))
+               (request->map request)))))
     (testing "Shopping cart store"
       (is (= expected
              (shopping-cart/get-cart shopping-cart-store cart-id))))))
 
 (deftest POST-multiple-cart-test
-  (let [handler (get-in ds/*system* [::ds/instances :http :handler])
-        shopping-cart-store (get-in ds/*system* [::ds/instances :components :shopping-cart-store])
-        product-catalog-gateway (get-in ds/*system* [::ds/instances :components :product-catalog-gateway])
+  (let [{:keys [handler shopping-cart-store product-catalog-gateway]} (extract ds/*system*)
         cart-id 1
         product-id-1 1
         product-id-2 2
@@ -108,29 +104,25 @@
       (testing "returns 200"
         (is (= 200 (:status request))))
       (testing "body"
-        (is (= expected
-               (-> request
-                   :body
-                   slurp
-                   (j/read-value j/keyword-keys-object-mapper))))))
+        (is (= expected (request->map request)))))
     (testing "Shopping cart store"
       (is (= expected
              (shopping-cart/get-cart shopping-cart-store cart-id))))))
 
 (deftest DELETE-cart-test
-  (let [handler (get-in ds/*system* [::ds/instances :http :handler])
+  (let [{:keys [handler shopping-cart-store]} (extract ds/*system*)
         cart-id 1
         product-id 1
         request (handler {:request-method :delete
                           :uri (str  "/shoppingcart/" cart-id "/items")
-                          :body-params {:product-ids [product-id]}})]
+                          :body-params {:product-ids [product-id]}})
+        expected {:user-id cart-id
+                  :items []}]
     (testing "DELETE removes item from cart"
       (testing "returns 200"
         (is (= 200 (:status request))))
       (testing "returns body"
-        (is (= {:user-id cart-id
-                :items []}
-               (-> request
-                   :body
-                   slurp
-                   (j/read-value j/keyword-keys-object-mapper))))))))
+        (is (= expected (request->map request)))))
+    (testing "Shopping cart store"
+      (is (= expected
+             (shopping-cart/get-cart shopping-cart-store cart-id))))))

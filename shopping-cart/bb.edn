@@ -1,1 +1,3 @@
-{:tasks {repl (shell "clj -M:repl:test")}}
+{:tasks {dev (shell "clj -M:repl:test")
+         build (shell "clj -T:build uber")
+         start (shell "clj -M -m congo.core")}}

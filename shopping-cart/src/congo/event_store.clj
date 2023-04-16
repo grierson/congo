@@ -7,7 +7,7 @@
         ds (jdbc/get-datasource db)]
     (jdbc/execute!
      ds
-     ["create table events (
+     ["create table if not exists events (
       id UUID NOT NULL DEFAULT random_uuid() PRIMARY KEY,
       position int auto_increment,
       type varchar(32),

@@ -1,4 +1,6 @@
 {:tasks {dev (shell "clojure -M:repl:test")
          build-uber (shell "clojure -T:build uber")
          run-uber (shell "java -jar target/app-standalone.jar")
-         start (shell "clojure -M -m congo.core")}}
+         start (shell "clojure -M -m congo.core")
+         docker-build (shell "docker build . -t shopping-cart:1")
+         docker-run (shell "docker run -p 9000:9000 shopping-cart:1")}}

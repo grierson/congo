@@ -1,7 +1,5 @@
 FROM clojure:temurin-17-alpine
 
-EXPOSE 9000 9000
-
 RUN apk --no-cache add curl
 RUN bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
 
@@ -14,5 +12,7 @@ COPY src/ ./src/
 COPY resources/ ./resources/
 
 RUN bb build-uber
+
+EXPOSE 9000
 
 ENTRYPOINT java -jar target/app-standalone.jar

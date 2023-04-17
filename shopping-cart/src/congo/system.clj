@@ -1,14 +1,18 @@
 (ns congo.system
   (:require [donut.system :as ds]
             [ring.adapter.jetty :as rj]
+            [aero.core :as aero]
             [congo.resource :as resource]
             [congo.event-store :as events]
             [congo.shopping-cart :as shopping-cart]
             [congo.product-catalog :as product-catalog]))
 
+(defn env-config [& [profile]]
+  (aero/read-config "config.edn" (when profile {:profile profile})))
+
 (def base-system
   {::ds/defs
-   {:env {:http-port 9000}
+   {:env {}
 
     :components
     {:event-store
@@ -47,19 +51,24 @@
            :stop  (fn [{:keys [::ds/instance]}]
                     (.stop instance))
            :config  {:handler (ds/local-ref [:handler])
-                     :options {:port (ds/ref [:env :http-port])
+                     :options {:port (ds/ref [:env :webserver :port])
                                :join? false}}}}}})
 
 (defmethod ds/named-system ::base
   [_]
   base-system)
 
+(defmethod ds/named-system ::production
+  [_]
+  (ds/system ::base {[:env] (env-config :production)}))
+
 (defmethod ds/named-system ::test
   [_]
-  (ds/system ::base {[:http :server] ::disabled}))
+  (ds/system ::base {[:env] (env-config :test)
+                     [:http :server] ::disabled}))
 
 (comment
-  (def system (ds/start ::test))
-  (println (get-in system [::ds/instances :http :handler]))
+  (def system (ds/start ::production))
+  (println (get-in system [::ds/instances :env]))
   (ds/stop system))
 

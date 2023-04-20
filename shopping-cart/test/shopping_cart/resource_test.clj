@@ -1,12 +1,12 @@
-(ns congo.resource-test
+(ns shopping-cart.resource-test
   (:require
    [clojure.test :refer [deftest is testing use-fixtures]]
-   [congo.event-store :as events]
-   [congo.system :as system]
+   [shopping-cart.event-store :as events]
+   [shopping-cart.system :as system]
    [donut.system :as ds]
    [jsonista.core :as j]
-   [congo.shopping-cart :as shopping-cart]
-   [congo.product-catalog :as product-catalog]))
+[shopping-cart.shopping-cart :as shopping-cart]
+   [shopping-cart.product-catalog :as product-catalog]))
 
 (use-fixtures :each (ds/system-fixture ::system/test))
 

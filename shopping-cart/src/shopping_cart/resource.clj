@@ -1,4 +1,4 @@
-(ns congo.resource
+(ns shopping-cart.resource
   (:require
    [reitit.ring :as ring]
    [malli.experimental.lite :as l]
@@ -7,9 +7,9 @@
    [reitit.ring.middleware.parameters :as parameters]
    [reitit.ring.middleware.muuntaja :as muuntaja]
    [muuntaja.core :as m]
-   [congo.shopping-cart :as shopping-cart]
-   [congo.product-catalog :as product-catalog]
-   [congo.event-store :as events]))
+   [shopping-cart.shopping-cart :as shopping-cart]
+   [shopping-cart.product-catalog :as product-catalog]
+   [shopping-cart.event-store :as events]))
 
 (defn app
   [{:keys [shopping-cart-store product-catalog-gateway event-store]}]

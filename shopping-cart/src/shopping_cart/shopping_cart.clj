@@ -1,6 +1,6 @@
-(ns congo.shopping-cart
+(ns shopping-cart.shopping-cart
   (:require
-   [congo.event-store :as events]
+   [shopping-cart.event-store :as events]
    [taoensso.carmine :as car :refer [wcar]])
   (:import
    [com.github.fppt.jedismock RedisServer]))

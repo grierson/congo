@@ -1,4 +1,4 @@
-(ns congo.event-store
+(ns shopping-cart.event-store
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]))
 

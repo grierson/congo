@@ -1,4 +1,4 @@
-(ns congo.product-catalog)
+(ns shopping-cart.product-catalog)
 
 (defn make-store []
   (let [product-id-1 1

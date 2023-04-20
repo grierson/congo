@@ -1,11 +1,11 @@
-(ns congo.system
+(ns shopping-cart.system
   (:require [donut.system :as ds]
             [ring.adapter.jetty :as rj]
             [aero.core :as aero]
-            [congo.resource :as resource]
-            [congo.event-store :as events]
-            [congo.shopping-cart :as shopping-cart]
-            [congo.product-catalog :as product-catalog]))
+            [shopping-cart.resource :as resource]
+            [shopping-cart.event-store :as events]
+            [shopping-cart.shopping-cart :as shopping-cart]
+            [shopping-cart.product-catalog :as product-catalog]))
 
 (defn env-config [& [profile]]
   (aero/read-config "config.edn" (when profile {:profile profile})))

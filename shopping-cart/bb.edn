@@ -4,7 +4,7 @@
 
          test
          {:doc "Run tests"
-          :task (shell "clojure -M:test \"$@\"")}
+          :task (shell "clojure -M:test")}
 
          uber:build
          {:doc "Build uber"

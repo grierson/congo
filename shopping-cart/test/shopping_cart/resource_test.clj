@@ -5,7 +5,7 @@
    [shopping-cart.system :as system]
    [donut.system :as ds]
    [jsonista.core :as j]
-[shopping-cart.shopping-cart :as shopping-cart]
+   [shopping-cart.shopping-cart :as shopping-cart]
    [shopping-cart.product-catalog :as product-catalog]))
 
 (use-fixtures :each (ds/system-fixture ::system/test))

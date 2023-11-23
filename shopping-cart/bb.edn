@@ -1,7 +1,27 @@
-{:tasks {dev (shell "clojure -M:repl")
-         test (shell "clojure -M:test \"$@\"")
-         build-uber (shell "clojure -T:build uber")
-         run-uber (shell "java -jar target/app-standalone.jar")
-         start (shell "clojure -M -m shopping-cart.core")
-         docker-build (shell "docker build . -t shopping-cart:1")
-         docker-run (shell "docker run -p 9000:9000 shopping-cart:1")}}
+{:tasks {dev
+         {:doc "Start repl"
+          :task (shell "clojure -M:repl")}
+
+         test
+         {:doc "Run tests"
+          :task (shell "clojure -M:test \"$@\"")}
+
+         uber:build
+         {:doc "Build uber"
+          :task (shell "clojure -T:build uber")}
+
+         uber:run
+         {:doc "Run uber"
+          :task (shell "java -jar target/app-standalone.jar")}
+
+         start
+         {:doc "Run locally"
+          :task (shell "clojure -M -m shopping-cart.core")}
+
+         container:image
+         {:doc "Build image"
+          :task (shell "docker build . -t shopping-cart:1")}
+
+         container:run
+         {:doc "Run container"
+          :task (shell "docker run -p 9000:9000 shopping-cart:1")}}}

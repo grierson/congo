@@ -1,14 +1,18 @@
 (ns shopping-cart.system
-  (:require [donut.system :as ds]
-            [ring.adapter.jetty :as rj]
-            [aero.core :as aero]
-            [shopping-cart.resource :as resource]
-            [shopping-cart.event-store :as events]
-            [shopping-cart.shopping-cart :as shopping-cart]
-            [shopping-cart.product-catalog :as product-catalog]))
+  (:require
+   [aero.core :as aero]
+   [clojure.java.io :as io]
+   [donut.system :as ds]
+   [ring.adapter.jetty :as rj]
+   [shopping-cart.event-store :as events]
+   [shopping-cart.product-catalog :as product-catalog]
+   [shopping-cart.resource :as resource]
+   [shopping-cart.shopping-cart :as shopping-cart]))
 
-(defn env-config [& [profile]]
-  (aero/read-config "config.edn" (when profile {:profile profile})))
+(defn env-config [profile]
+  (aero/read-config
+   (io/resource "config.edn")
+   (when profile {:profile profile})))
 
 (def base-system
   {::ds/defs
@@ -19,6 +23,7 @@
      #::ds{:start (fn [_] (events/make-store))
            :stop (fn [{:keys [::ds/instance]}]
                    (events/kill-store instance))}
+
      :shopping-cart-server
      #::ds {:start (fn [_] (shopping-cart/make-server))
             :stop (fn [{:keys [::ds/instance]}]
@@ -57,6 +62,8 @@
 (defmethod ds/named-system ::base
   [_]
   base-system)
+
+(env-config :foo)
 
 (defmethod ds/named-system ::production
   [_]

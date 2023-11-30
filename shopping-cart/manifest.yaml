@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: shopping-cart
-          image: shopping-cart
+          image: griersoncongoacr.azurecr.io/shopping-cart:1.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

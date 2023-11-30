@@ -1,2 +1,10 @@
 /target
 /**.db
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.hcl
+*.tfstate
+*.tfstate.*

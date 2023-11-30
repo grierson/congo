@@ -1,8 +1,5 @@
 FROM clojure:temurin-17-alpine
 
-RUN apk --no-cache add curl
-RUN bash < <(curl -s https://raw.githubusercontent.com/babashka/babashka/master/install)
-
 WORKDIR /app
 
 COPY deps.edn ./
@@ -11,8 +8,8 @@ COPY bb.edn ./
 COPY src/ ./src/
 COPY resources/ ./resources/
 
-RUN bb build-uber
+RUN clojure -T:build uber
 
-EXPOSE 9000
+EXPOSE 80
 
 ENTRYPOINT java -jar target/app-standalone.jar

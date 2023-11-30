@@ -1,0 +1,13 @@
+GET http://localhost:5000/health
+
+###
+
+POST http://localhost:5000/shoppingcart/15/items
+Content-Type: application/json
+Accept: application/json
+
+{"product-ids": [1, 2]}
+
+###
+
+GET http://localhost:5000/shoppingcart/15

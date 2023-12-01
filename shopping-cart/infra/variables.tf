@@ -6,7 +6,3 @@ variable "location" {
   type    = string
   default = "ukwest"
 }
-
-//variable "kubernetes_version" {
-//  type = string
-//}

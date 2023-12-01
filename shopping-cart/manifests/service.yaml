@@ -1,0 +1,13 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: shopping-cart
+spec:
+  type: LoadBalancer
+  ports:
+    - name: shopping-cart
+      port: 5000
+      targetPort: 80
+  selector:
+    app: shopping-cart

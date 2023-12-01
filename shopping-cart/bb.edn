@@ -18,18 +18,45 @@
          {:doc "Run locally"
           :task (shell "clojure -M -m shopping-cart.core")}
 
-         container:image
+         docker:build
          {:doc "Build image"
-          :task (shell "docker build . -t shopping-cart")}
+          :task (shell "docker build --tag shopping-cart .")}
 
-         container:run
+         docker:run
          {:doc "Run container"
           :task (shell "docker run --rm -p 5000:80 shopping-cart")}
 
+         acr:login
+         {:doc "Login to ACR"
+          :requires ([cheshire.core :as json])
+          :task (let [result (-> (shell {:out :string} "az acr credential show --name congo")
+                                 :out
+                                 (json/parse-string true))
+                      username (:username result)
+                      password (get-in result [:passwords 0 :value])
+                      host (-> (shell {:dir "infra" :out :string} "terraform output -raw registry_hostname")
+                               :out)]
+                  (shell (str "docker login " host " --username " username " --password " password)))}
+
+         acr:build
+         {:doc "Tag image for ACR"
+          :depends [docker:build]
+          :requires ([cheshire.core :as json])
+          :task (let [host (-> (shell {:dir "infra" :out :string} "terraform output -raw registry_hostname")
+                               :out)]
+                  (shell (str "docker tag shopping-cart:latest " host "/shopping-cart:latest")))}
+
+         acr:push
+         {:doc "Push image to ACR"
+          :requires ([cheshire.core :as json])
+          :task (let [host (-> (shell {:dir "infra" :out :string} "terraform output -raw registry_hostname")
+                               :out)]
+                  (shell (str "docker push " host "/shopping-cart:latest")))}
+
          k8:apply
          {:doc "Run k8"
-          :task (shell "kubectl apply -f manifest.yaml")}
+          :task (shell "kubectl apply -f manifests/")}
 
          k8:delete
          {:doc "Stop k8"
-          :task (shell "kubectl delete -f manifest.yaml")}}}
+          :task (shell "kubectl delete -f manifests/")}}}

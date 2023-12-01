@@ -25,4 +25,9 @@
 *~
 /checkouts
 /classes
-/target
+target/
+/**.db
+**/.terraform/*
+*.hcl
+*.tfstate
+*.tfstate.*

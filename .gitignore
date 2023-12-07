@@ -31,3 +31,5 @@ target/
 *.hcl
 *.tfstate
 *.tfstate.*
+bin/
+obj/

@@ -10,6 +10,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
+  "id": 2,
   "name":"kyle",
   "loyaltyPoints": 0,
   "settings":{ "interests" : ["whisky", "cycling"] }

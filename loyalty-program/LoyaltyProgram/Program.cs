@@ -17,7 +17,7 @@ app.UseHttpsRedirection();
 
 var RegisteredUsers = new Dictionary<int, LoyaltyProgramUser>();
 
-CreatedUserResponse MakeUser(LoyaltyProgramUser body)
+CreatedUserResponse RegisterUser(LoyaltyProgramUser body)
 {
     RegisteredUsers.Add(body.id, body);
     return new CreatedUserResponse(body.name);
@@ -41,9 +41,12 @@ app.MapPost("/users", (LoyaltyProgramUser body) =>
     if (!result.IsValid)
         return Results.BadRequest();
 
-    var newUser = MakeUser(body);
+    if (RegisteredUsers.ContainsKey(body.id))
+        return Results.BadRequest("User already exists");
 
-    return Results.Created<CreatedUserResponse>($"/user/{body.id}", newUser);
+    var newUser = RegisterUser(body);
+
+    return Results.Created<CreatedUserResponse>($"/users/{body.id}", newUser);
 });
 
 app.MapPut("/users/{id:int}", (int id, LoyaltyProgramUser body) =>

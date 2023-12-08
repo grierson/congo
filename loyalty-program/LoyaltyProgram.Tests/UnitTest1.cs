@@ -3,7 +3,6 @@ namespace LoyaltyProgram.Tests;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
-using System.Collections.Immutable;
 
 
 public class UsersTests
@@ -15,8 +14,9 @@ public class UsersTests
         using var client = application.CreateClient();
 
         var name = "Alice";
+        const int id = 4;
 
-        LoyaltyProgramUser body = new LoyaltyProgramUser(4, name, 0, new Settings(["whisky", "cycling"]));
+        LoyaltyProgramUser body = new LoyaltyProgramUser(id, name, 0, new Settings(["whisky", "cycling"]));
 
         var result = await client.PostAsJsonAsync("/users", body);
         var actual = await result.Content.ReadFromJsonAsync<CreatedUserResponse>();
@@ -24,7 +24,27 @@ public class UsersTests
         var expected = new CreatedUserResponse(name);
 
         Assert.Equal(HttpStatusCode.Created, result.StatusCode);
+        Assert.Equal($"/users/{id}", result.Headers.Location.ToString());
         Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public async Task create_same_user_twice_fails()
+    {
+        await using var application = new WebApplicationFactory<Program>();
+        using var client = application.CreateClient();
+
+        const int id = 4;
+
+        LoyaltyProgramUser body = new LoyaltyProgramUser(id, "alice", 0, new Settings(["whisky", "cycling"]));
+
+        await client.PostAsJsonAsync("/users", body);
+
+        var result = await client.PostAsJsonAsync("/users", body);
+        var actual = await result.Content.ReadFromJsonAsync<string>();
+
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.Equal("User already exists", actual);
     }
 
     [Fact]

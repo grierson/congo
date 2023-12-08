@@ -33,3 +33,4 @@ target/
 *.tfstate.*
 bin/
 obj/
+*.vim

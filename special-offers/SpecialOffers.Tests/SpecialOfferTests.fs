@@ -1,4 +1,4 @@
-module Tests
+module SpecialOfferTests
 
 open Program
 open Xunit
@@ -29,7 +29,7 @@ let ``offer found`` () =
         let id = 1
 
         let request = { Id = id; Description = "New thing" }
-        let! create_response = client.PostAsJsonAsync<Offer>("/", request)
+        let! _ = client.PostAsJsonAsync<Offer>("/", request)
 
         let! response = client.GetAsync($"/{id}")
         let! content = response.Content.ReadFromJsonAsync<Offer>()
@@ -60,7 +60,7 @@ let ``update offer`` () =
         let id = 1
 
         let request = { Id = id; Description = "New thing" }
-        let! create_response = client.PostAsJsonAsync<Offer>("/", request)
+        let! _ = client.PostAsJsonAsync<Offer>("/", request)
 
         let updated_request =
             { request with
@@ -92,7 +92,7 @@ let ``delete offer`` () =
         let id = 1
 
         let request = { Id = id; Description = "New thing" }
-        let! create_response = client.PostAsJsonAsync<Offer>("/", request)
+        let! _ = client.PostAsJsonAsync<Offer>("/", request)
 
         let! delete_response = client.DeleteAsync($"/{1}")
 

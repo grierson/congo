@@ -1,4 +1,3 @@
-open FSharp.MinimalApi
 open FSharp.MinimalApi.Builder
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
@@ -26,14 +25,14 @@ let routes =
 
         put "/{id:int}" produces<Ok<Offer>, NotFound> (fun (req: {| offer: Offer |}) ->
             (match offers.TryGetValue(req.offer.Id) with
-             | true, offer ->
+             | true, _ ->
                  offers[req.offer.Id] <- req.offer
                  !! Ok(req.offer)
              | false, _ -> !! NotFound()))
 
         delete "/{id:int}" produces<Ok, NotFound> (fun (req: {| id: int |}) ->
             (match offers.TryGetValue(req.id) with
-             | true, offer ->
+             | true, _ ->
                  offers.Remove(req.id) |> ignore
                  !! Ok()
              | false, _ -> !! NotFound()))

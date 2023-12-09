@@ -90,13 +90,11 @@ let ``delete offer`` () =
         let client = runTestApi().CreateClient()
 
         let id = 1
-
         let request = { Id = id; Description = "New thing" }
+
         let! _ = client.PostAsJsonAsync<Offer>("specialoffers/", request)
-
-        let! delete_response = client.DeleteAsync($"specialoffers/{1}")
-
-        let! get_response = client.GetAsync("specialoffers/1")
+        let! delete_response = client.DeleteAsync($"specialoffers/{id}")
+        let! get_response = client.GetAsync($"specialoffers/{id}")
 
         test <@ HttpStatusCode.OK = delete_response.StatusCode @>
         test <@ HttpStatusCode.NotFound = get_response.StatusCode @>

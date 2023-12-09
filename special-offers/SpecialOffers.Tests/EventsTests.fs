@@ -10,11 +10,11 @@ let runTestApi () =
     (new WebApplicationFactory<Program>()).Server
 
 
-(* [<Fact>] *)
-(* let ``offer not found`` () = *)
-(*     task { *)
-(*         let client = runTestApi().CreateClient() *)
-(*         let! response = client.GetAsync("/events") *)
-(**)
-(*         test <@ HttpStatusCode.OK = response.StatusCode @> *)
-(*     } *)
+[<Fact>]
+let ``Get events`` () =
+    task {
+        let client = runTestApi().CreateClient()
+        let! response = client.GetAsync("/events")
+
+        test <@ HttpStatusCode.OK = response.StatusCode @>
+    }

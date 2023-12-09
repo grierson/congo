@@ -15,7 +15,7 @@ let runTestApi () =
 let ``offer not found`` () =
     task {
         let client = runTestApi().CreateClient()
-        let! response = client.GetAsync("/1")
+        let! response = client.GetAsync("specialoffers/1")
 
         test <@ HttpStatusCode.NotFound = response.StatusCode @>
     }
@@ -29,9 +29,9 @@ let ``offer found`` () =
         let id = 1
 
         let request = { Id = id; Description = "New thing" }
-        let! _ = client.PostAsJsonAsync<Offer>("/", request)
+        let! _ = client.PostAsJsonAsync<Offer>("specialoffers/", request)
 
-        let! response = client.GetAsync($"/{id}")
+        let! response = client.GetAsync($"specialoffers/{id}")
         let! content = response.Content.ReadFromJsonAsync<Offer>()
 
         test <@ HttpStatusCode.OK = response.StatusCode @>
@@ -44,7 +44,7 @@ let ``create offer`` () =
         let client = runTestApi().CreateClient()
 
         let request = { Id = 1; Description = "New thing" }
-        let! response = client.PostAsJsonAsync<Offer>("/", request)
+        let! response = client.PostAsJsonAsync<Offer>("specialoffers/", request)
         let! content = response.Content.ReadFromJsonAsync<Offer>()
 
         test <@ HttpStatusCode.Created = response.StatusCode @>
@@ -60,13 +60,13 @@ let ``update offer`` () =
         let id = 1
 
         let request = { Id = id; Description = "New thing" }
-        let! _ = client.PostAsJsonAsync<Offer>("/", request)
+        let! _ = client.PostAsJsonAsync<Offer>("specialoffers/", request)
 
         let updated_request =
             { request with
                 Description = "Other thing" }
 
-        let! response = client.PutAsJsonAsync($"/{id}", updated_request)
+        let! response = client.PutAsJsonAsync($"specialoffers/{id}", updated_request)
         let! content = response.Content.ReadFromJsonAsync<Offer>()
 
         test <@ HttpStatusCode.OK = response.StatusCode @>
@@ -79,7 +79,7 @@ let ``delete not found`` () =
     task {
         let client = runTestApi().CreateClient()
 
-        let! response = client.DeleteAsync($"/1")
+        let! response = client.DeleteAsync($"specialoffers/1")
 
         test <@ HttpStatusCode.NotFound = response.StatusCode @>
     }
@@ -92,11 +92,11 @@ let ``delete offer`` () =
         let id = 1
 
         let request = { Id = id; Description = "New thing" }
-        let! _ = client.PostAsJsonAsync<Offer>("/", request)
+        let! _ = client.PostAsJsonAsync<Offer>("specialoffers/", request)
 
-        let! delete_response = client.DeleteAsync($"/{1}")
+        let! delete_response = client.DeleteAsync($"specialoffers/{1}")
 
-        let! get_response = client.GetAsync("/1")
+        let! get_response = client.GetAsync("specialoffers/1")
 
         test <@ HttpStatusCode.OK = delete_response.StatusCode @>
         test <@ HttpStatusCode.NotFound = get_response.StatusCode @>

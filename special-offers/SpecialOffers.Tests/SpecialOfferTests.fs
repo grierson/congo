@@ -128,27 +128,25 @@ type TestFooService =
     interface IFooService with
         member this.foo() = "test foo service"
 
-let configureServices (services: IServiceCollection) =
-    services.AddScoped<IFooService, TestFooService>() |> ignore
-
-let make_builder =
-    Action<IWebHostBuilder>(fun builder ->
-        builder.ConfigureServices(Action<IServiceCollection>(fun services -> configureServices services))
-        |> ignore
-
-        ())
 
 [<Fact>]
 let ``Foo service test`` () =
     task {
         let application = (new WebApplicationFactory<Program>())
 
-        Console.WriteLine("Services")
-        Console.WriteLine(application.Services.GetServices)
-        Console.WriteLine("Services")
+        let configureServices (services: IServiceCollection) =
+            services.AddScoped<IFooService, TestFooService>() |> ignore
+            ()
 
-        let builder = make_builder
-        application.WithWebHostBuilder(builder) |> ignore
+        let webhostBuilder (builder: IWebHostBuilder) =
+            builder.ConfigureServices(Action<IServiceCollection>(configureServices))
+            |> ignore
+
+            ()
+
+        application.WithWebHostBuilder(Action<IWebHostBuilder>(webhostBuilder))
+        |> ignore
+
         let client = application.CreateClient()
 
         let! response = client.GetAsync("/events/foo")

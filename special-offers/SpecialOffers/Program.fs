@@ -1,13 +1,53 @@
+open System
+open System.Collections.Generic
+open System.Threading
 open FSharp.MinimalApi.Builder
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.HttpResults
-open System.Collections.Generic
+open Microsoft.Extensions.DependencyInjection
 open type TypedResults
 
 type Offer = { Id: int; Description: string }
 
-let mutable offers = Dictionary<int, Offer>()
+type EventFeedEvent =
+    { SequenceNumber: int
+      OccurredAt: DateTimeOffset
+      Name: string
+      Content: obj }
+
+
+type IFooService =
+    abstract member foo: unit -> string
+
+
+type IDateTimeService =
+    abstract member Now: unit -> DateTimeOffset
+
+type RealFooService() =
+    interface IFooService with
+        member this.foo() = "real"
+
+type DateTimeService() =
+    interface IDateTimeService with
+        member this.Now() = DateTimeOffset.UtcNow
+
+let mutable currentSequenceNumber = 0
+let mutable database = System.Collections.Generic.List<EventFeedEvent>()
+
+let raiseEvent (datetimeservice: IDateTimeService) (name: string) (content: obj) =
+    let seqNumber = Interlocked.Increment(&currentSequenceNumber)
+    let now = datetimeservice.Now()
+
+    let newEvent =
+        { SequenceNumber = seqNumber
+          OccurredAt = now
+          Name = name
+          Content = content }
+
+    database.Add(newEvent)
+
+let offers = Dictionary<int, Offer>()
 
 let routes =
     endpoints {
@@ -17,12 +57,19 @@ let routes =
                  | true, offer -> !! Ok(offer)
                  | false, _ -> !! NotFound()))
 
-            post "" produces<Created<Offer>, Conflict> (fun (req: {| offer: Offer |}) ->
-                (match offers.ContainsKey(req.offer.Id) with
-                 | true -> !! Conflict()
-                 | false ->
-                     offers.Add(req.offer.Id, req.offer)
-                     !! Created($"/{req.offer.Id}/", req.offer)))
+            post
+                ""
+                produces<Created<Offer>, Conflict>
+                (fun
+                    (req:
+                        {| offer: Offer
+                           datetimeservice: IDateTimeService |}) ->
+                    (match offers.ContainsKey(req.offer.Id) with
+                     | true -> !! Conflict()
+                     | false ->
+                         raiseEvent req.datetimeservice "SpecialOfferCreated" req.offer
+                         offers.Add(req.offer.Id, req.offer)
+                         !! Created($"/{req.offer.Id}/", req.offer)))
 
             delete "{id:int}" produces<Ok, NotFound> (fun (req: {| id: int |}) ->
                 (match offers.TryGetValue(req.id) with
@@ -39,10 +86,23 @@ let routes =
                  | false, _ -> !! NotFound()))
         }
 
-        routeGroup "events" { get "" (fun (_) -> Ok()) }
+        routeGroup "events" {
+            get "" produces<Ok<List<EventFeedEvent>>, BadRequest> (fun (req: {| start: int |}) ->
+                (if (req.start < 0) then !! BadRequest() else !! Ok(database)))
+
+
+            get "/foo" (fun (req: {| fooservice: IFooService |}) ->
+                (Console.WriteLine(">>>>")
+                 Console.WriteLine(req.fooservice.foo ())
+                 Console.WriteLine(">>>>")
+                 Ok(req.fooservice.foo ())))
+        }
     }
 
-let app = WebApplication.CreateBuilder().Build()
+let builder = WebApplication.CreateBuilder()
+builder.Services.AddScoped<IDateTimeService, DateTimeService>() |> ignore
+builder.Services.AddScoped<IFooService, RealFooService>() |> ignore
+let app = builder.Build()
 routes.Apply app |> ignore
 app.Run()
 

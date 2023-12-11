@@ -62,21 +62,38 @@ let ``offer found`` () =
 [<Fact>]
 let ``create offer`` () =
     task {
-        let client = makeWebApplication().CreateClient()
+        let date = DateTimeOffset(DateTime(year = 2023, month = 1, day = 1))
+
+        let application = setup date
+
+        let client = application.CreateClient()
 
         let request = { Id = 1; Description = "New thing" }
-        let! response = client.PostAsJsonAsync<Offer>("specialoffers/", request)
-        let! content = response.Content.ReadFromJsonAsync<Offer>()
+        let! create_offer_response = client.PostAsJsonAsync<Offer>("specialoffers/", request)
+        let! create_offer_response_content = create_offer_response.Content.ReadFromJsonAsync<Offer>()
 
-        test <@ HttpStatusCode.Created = response.StatusCode @>
-        test <@ request = content @>
+        let! events_response = client.GetAsync("/events?startRange=1&endRange=10")
+        let! events_response_content = events_response.Content.ReadFromJsonAsync<List<EventFeedEvent>>()
+        let event = events_response_content[0]
+
+        test <@ HttpStatusCode.Created = create_offer_response.StatusCode @>
+        test <@ request = create_offer_response_content @>
+
+        test <@ HttpStatusCode.OK = events_response.StatusCode @>
+        test <@ 1 = event.SequenceNumber @>
+        test <@ "SpecialOfferCreated" = event.Name @>
+        test <@ date = event.OccurredAt @>
     }
 
 
 [<Fact>]
 let ``update offer`` () =
     task {
-        let client = makeWebApplication().CreateClient()
+        let date = DateTimeOffset(DateTime(year = 2023, month = 1, day = 1))
+
+        let application = setup date
+
+        let client = application.CreateClient()
 
         let id = 1
 
@@ -87,11 +104,20 @@ let ``update offer`` () =
             { request with
                 Description = "Other thing" }
 
-        let! response = client.PutAsJsonAsync($"specialoffers/{id}", updated_request)
-        let! content = response.Content.ReadFromJsonAsync<Offer>()
+        let! updated_offer_response = client.PutAsJsonAsync($"specialoffers/{id}", updated_request)
+        let! update_offer_response_content = updated_offer_response.Content.ReadFromJsonAsync<Offer>()
 
-        test <@ HttpStatusCode.OK = response.StatusCode @>
-        test <@ updated_request = content @>
+        let! events_response = client.GetAsync("/events?startRange=1&endRange=10")
+        let! events_response_content = events_response.Content.ReadFromJsonAsync<List<EventFeedEvent>>()
+        let event = events_response_content[1]
+
+        test <@ HttpStatusCode.OK = updated_offer_response.StatusCode @>
+        test <@ updated_request = update_offer_response_content @>
+
+        test <@ HttpStatusCode.OK = events_response.StatusCode @>
+        test <@ 2 = event.SequenceNumber @>
+        test <@ "SpecialOfferUpdated" = event.Name @>
+        test <@ date = event.OccurredAt @>
     }
 
 
@@ -108,17 +134,30 @@ let ``delete not found`` () =
 [<Fact>]
 let ``delete offer`` () =
     task {
-        let client = makeWebApplication().CreateClient()
+        let date = DateTimeOffset(DateTime(year = 2023, month = 1, day = 1))
+
+        let application = setup date
+
+        let client = application.CreateClient()
 
         let id = 1
         let request = { Id = id; Description = "New thing" }
 
         let! _ = client.PostAsJsonAsync<Offer>("specialoffers/", request)
-        let! delete_response = client.DeleteAsync($"specialoffers/{id}")
-        let! get_response = client.GetAsync($"specialoffers/{id}")
+        let! delete_offer_response = client.DeleteAsync($"specialoffers/{id}")
+        let! get_offer_response = client.GetAsync($"specialoffers/{id}")
 
-        test <@ HttpStatusCode.OK = delete_response.StatusCode @>
-        test <@ HttpStatusCode.NotFound = get_response.StatusCode @>
+        let! events_response = client.GetAsync("/events?startRange=1&endRange=10")
+        let! events_response_content = events_response.Content.ReadFromJsonAsync<List<EventFeedEvent>>()
+        let event = events_response_content[1]
+
+        test <@ HttpStatusCode.OK = delete_offer_response.StatusCode @>
+        test <@ HttpStatusCode.NotFound = get_offer_response.StatusCode @>
+
+        test <@ HttpStatusCode.OK = events_response.StatusCode @>
+        test <@ 2 = event.SequenceNumber @>
+        test <@ "SpecialOfferDeleted" = event.Name @>
+        test <@ date = event.OccurredAt @>
     }
 
 
@@ -133,26 +172,4 @@ let ``Get empty events`` () =
 
         test <@ HttpStatusCode.OK = response.StatusCode @>
         test <@ List.isEmpty content @>
-    }
-
-[<Fact>]
-let ``Get first Special Offer created event`` () =
-    task {
-        let date = DateTimeOffset(DateTime(year = 2023, month = 1, day = 1))
-
-        let application = setup date
-
-        let client = application.CreateClient()
-
-        let createSpecialOfferRequest = { Id = 1; Description = "New thing" }
-        let! _ = client.PostAsJsonAsync<Offer>("specialoffers/", createSpecialOfferRequest)
-
-        let! response = client.GetAsync("/events?startRange=1&endRange=10")
-        let! content = response.Content.ReadFromJsonAsync<List<EventFeedEvent>>()
-        let event = content[0]
-
-        test <@ HttpStatusCode.OK = response.StatusCode @>
-        test <@ 1 = event.SequenceNumber @>
-        test <@ "SpecialOfferCreated" = event.Name @>
-        test <@ date = event.OccurredAt @>
     }

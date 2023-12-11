@@ -69,19 +69,33 @@ let routes =
                          offers.Add(req.offer.Id, req.offer)
                          !! Created($"/specialoffers/{req.offer.Id}/", req.offer)))
 
-            delete "{id:int}" produces<Ok, NotFound> (fun (req: {| id: int |}) ->
-                (match offers.TryGetValue(req.id) with
-                 | true, _ ->
-                     offers.Remove(req.id) |> ignore
-                     !! Ok()
-                 | false, _ -> !! NotFound()))
+            delete
+                "{id:int}"
+                produces<Ok, NotFound>
+                (fun
+                    (req:
+                        {| id: int
+                           datetimeservice: IDateTimeService |}) ->
+                    (match offers.TryGetValue(req.id) with
+                     | true, _ ->
+                         raiseEvent req.datetimeservice "SpecialOfferDeleted" req.id
+                         offers.Remove(req.id) |> ignore
+                         !! Ok()
+                     | false, _ -> !! NotFound()))
 
-            put "{id:int}" produces<Ok<Offer>, NotFound> (fun (req: {| offer: Offer |}) ->
-                (match offers.TryGetValue(req.offer.Id) with
-                 | true, _ ->
-                     offers[req.offer.Id] <- req.offer
-                     !! Ok(req.offer)
-                 | false, _ -> !! NotFound()))
+            put
+                "{id:int}"
+                produces<Ok<Offer>, NotFound>
+                (fun
+                    (req:
+                        {| offer: Offer
+                           datetimeservice: IDateTimeService |}) ->
+                    (match offers.TryGetValue(req.offer.Id) with
+                     | true, _ ->
+                         raiseEvent req.datetimeservice "SpecialOfferUpdated" req.offer
+                         offers[req.offer.Id] <- req.offer
+                         !! Ok(req.offer)
+                     | false, _ -> !! NotFound()))
         }
 
         routeGroup "events" {

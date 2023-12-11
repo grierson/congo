@@ -16,17 +16,8 @@ type EventFeedEvent =
       Name: string
       Content: obj }
 
-
-type IFooService =
-    abstract member foo: unit -> string
-
-
 type IDateTimeService =
     abstract member Now: unit -> DateTimeOffset
-
-type RealFooService() =
-    interface IFooService with
-        member this.foo() = "real"
 
 type DateTimeService() =
     interface IDateTimeService with
@@ -69,7 +60,7 @@ let routes =
                      | false ->
                          raiseEvent req.datetimeservice "SpecialOfferCreated" req.offer
                          offers.Add(req.offer.Id, req.offer)
-                         !! Created($"/{req.offer.Id}/", req.offer)))
+                         !! Created($"/specialoffers/{req.offer.Id}/", req.offer)))
 
             delete "{id:int}" produces<Ok, NotFound> (fun (req: {| id: int |}) ->
                 (match offers.TryGetValue(req.id) with
@@ -86,22 +77,11 @@ let routes =
                  | false, _ -> !! NotFound()))
         }
 
-        routeGroup "events" {
-            get "" produces<Ok<List<EventFeedEvent>>, BadRequest> (fun (req: {| start: int |}) ->
-                (if (req.start < 0) then !! BadRequest() else !! Ok(database)))
-
-
-            get "/foo" (fun (req: {| fooservice: IFooService |}) ->
-                (Console.WriteLine(">>>>")
-                 Console.WriteLine(req.fooservice.foo ())
-                 Console.WriteLine(">>>>")
-                 Ok(req.fooservice.foo ())))
-        }
+        routeGroup "events" { get "" produces<Ok<List<EventFeedEvent>>> (fun () -> Ok(database)) }
     }
 
 let builder = WebApplication.CreateBuilder()
 builder.Services.AddScoped<IDateTimeService, DateTimeService>() |> ignore
-builder.Services.AddScoped<IFooService, RealFooService>() |> ignore
 let app = builder.Build()
 routes.Apply app |> ignore
 app.Run()

@@ -5,15 +5,11 @@ open System
 open Xunit
 open Swensen.Unquote
 open System.Net
-open System.Net.Http
 open System.Net.Http.Json
+open System.Collections.Generic
 open Microsoft.AspNetCore.Mvc.Testing
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.Hosting
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.TestHost
 
 let makeWebApplication () = (new WebApplicationFactory<Program>())
 
@@ -119,23 +115,18 @@ let ``Get empty events`` () =
         test <@ List.isEmpty content @>
     }
 
-type TestDateTimeService =
-    interface IDateTimeService with
-        member this.Now() = DateTimeOffset.Now.AddDays(10)
-
-
-type TestFooService =
-    interface IFooService with
-        member this.foo() = "test foo service"
-
-
 [<Fact>]
-let ``Foo service test`` () =
+let ``Get first Special Offer created event`` () =
     task {
-        let application = (new WebApplicationFactory<Program>())
+        let date = DateTimeOffset(DateTime(year = 2023, month = 1, day = 1))
+
+        let dateTimeService =
+            { new IDateTimeService with
+                member this.Now() = date }
 
         let configureServices (services: IServiceCollection) =
-            services.AddScoped<IFooService, TestFooService>() |> ignore
+            services.AddScoped<IDateTimeService>(fun _ -> dateTimeService) |> ignore
+
             ()
 
         let webhostBuilder (builder: IWebHostBuilder) =
@@ -144,14 +135,23 @@ let ``Foo service test`` () =
 
             ()
 
-        application.WithWebHostBuilder(Action<IWebHostBuilder>(webhostBuilder))
-        |> ignore
+        use application =
+            (new WebApplicationFactory<Program>()).WithWebHostBuilder(webhostBuilder)
 
         let client = application.CreateClient()
 
-        let! response = client.GetAsync("/events/foo")
-        let! content = response.Content.ReadAsStringAsync()
+        let createSpecialOfferRequest = { Id = 1; Description = "New thing" }
+        let! _ = client.PostAsJsonAsync<Offer>("specialoffers/", createSpecialOfferRequest)
+
+        let! response = client.GetAsync("/events")
+        let! content = response.Content.ReadFromJsonAsync<List<EventFeedEvent>>()
+        let event = content[0]
+        Console.WriteLine(">>>")
+        Console.WriteLine(event)
+        Console.WriteLine(">>>")
 
         test <@ HttpStatusCode.OK = response.StatusCode @>
-        test <@ "Test Foo" = content @>
+        test <@ 1 = event.SequenceNumber @>
+        test <@ "SpecialOfferCreated" = event.Name @>
+        test <@ date = event.OccurredAt @>
     }

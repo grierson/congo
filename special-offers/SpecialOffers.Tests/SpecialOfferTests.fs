@@ -127,7 +127,7 @@ let ``Get empty events`` () =
     task {
         let client = makeWebApplication().CreateClient()
 
-        let! response = client.GetAsync("/events?start=1")
+        let! response = client.GetAsync("/events?startRange=1&endRange=10")
 
         let! content = response.Content.ReadFromJsonAsync<EventFeedEvent list>()
 
@@ -147,7 +147,7 @@ let ``Get first Special Offer created event`` () =
         let createSpecialOfferRequest = { Id = 1; Description = "New thing" }
         let! _ = client.PostAsJsonAsync<Offer>("specialoffers/", createSpecialOfferRequest)
 
-        let! response = client.GetAsync("/events")
+        let! response = client.GetAsync("/events?startRange=1&endRange=10")
         let! content = response.Content.ReadFromJsonAsync<List<EventFeedEvent>>()
         let event = content[0]
 

@@ -2,6 +2,7 @@ open System
 open System.Collections.Generic
 open System.Threading
 open FSharp.MinimalApi.Builder
+open FSharp.MinimalApi
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.HttpResults
@@ -24,7 +25,7 @@ type DateTimeService() =
         member this.Now() = DateTimeOffset.UtcNow
 
 let mutable currentSequenceNumber = 0
-let mutable database = List<EventFeedEvent>()
+let mutable database = List.Empty
 
 let raiseEvent (datetimeservice: IDateTimeService) (name: string) (content: obj) =
     let seqNumber = Interlocked.Increment(&currentSequenceNumber)
@@ -36,7 +37,13 @@ let raiseEvent (datetimeservice: IDateTimeService) (name: string) (content: obj)
           Name = name
           Content = content }
 
-    database.Add(newEvent)
+    database <- newEvent :: database
+
+let getEvents (database: EventFeedEvent list) (startRange: int) (endRange: int) : EventFeedEvent list =
+    database
+    |> List.filter (fun event -> event.SequenceNumber >= startRange && event.SequenceNumber <= endRange)
+    |> List.sortBy _.SequenceNumber
+
 
 let offers = Dictionary<int, Offer>()
 
@@ -77,7 +84,14 @@ let routes =
                  | false, _ -> !! NotFound()))
         }
 
-        routeGroup "events" { get "" produces<Ok<List<EventFeedEvent>>> (fun () -> Ok(database)) }
+        routeGroup "events" {
+            get "" produces<Ok<EventFeedEvent list>, BadRequest> (fun (req: {| startRange: int; endRange: int |}) ->
+                if (req.startRange < 0 || req.endRange < req.startRange) then
+                    !! BadRequest()
+                else
+                    let events = getEvents database req.startRange req.endRange
+                    !! Ok(events))
+        }
     }
 
 let builder = WebApplication.CreateBuilder()

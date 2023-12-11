@@ -24,7 +24,7 @@ type DateTimeService() =
         member this.Now() = DateTimeOffset.UtcNow
 
 let mutable currentSequenceNumber = 0
-let mutable database = System.Collections.Generic.List<EventFeedEvent>()
+let mutable database = List<EventFeedEvent>()
 
 let raiseEvent (datetimeservice: IDateTimeService) (name: string) (content: obj) =
     let seqNumber = Interlocked.Increment(&currentSequenceNumber)

@@ -13,6 +13,26 @@ open Microsoft.AspNetCore.Hosting
 
 let makeWebApplication () = (new WebApplicationFactory<Program>())
 
+let setup date =
+    let dateTimeService =
+        { new IDateTimeService with
+            member this.Now() = date }
+
+    let configureServices (services: IServiceCollection) =
+        services.AddScoped<IDateTimeService>(fun _ -> dateTimeService) |> ignore
+
+        ()
+
+    let webhostBuilder (builder: IWebHostBuilder) =
+        builder.ConfigureServices(Action<IServiceCollection>(configureServices))
+        |> ignore
+
+        ()
+
+    (new WebApplicationFactory<Program>()).WithWebHostBuilder(webhostBuilder)
+
+
+
 [<Fact>]
 let ``offer not found`` () =
     task {
@@ -120,23 +140,7 @@ let ``Get first Special Offer created event`` () =
     task {
         let date = DateTimeOffset(DateTime(year = 2023, month = 1, day = 1))
 
-        let dateTimeService =
-            { new IDateTimeService with
-                member this.Now() = date }
-
-        let configureServices (services: IServiceCollection) =
-            services.AddScoped<IDateTimeService>(fun _ -> dateTimeService) |> ignore
-
-            ()
-
-        let webhostBuilder (builder: IWebHostBuilder) =
-            builder.ConfigureServices(Action<IServiceCollection>(configureServices))
-            |> ignore
-
-            ()
-
-        use application =
-            (new WebApplicationFactory<Program>()).WithWebHostBuilder(webhostBuilder)
+        let application = setup date
 
         let client = application.CreateClient()
 
@@ -146,9 +150,6 @@ let ``Get first Special Offer created event`` () =
         let! response = client.GetAsync("/events")
         let! content = response.Content.ReadFromJsonAsync<List<EventFeedEvent>>()
         let event = content[0]
-        Console.WriteLine(">>>")
-        Console.WriteLine(event)
-        Console.WriteLine(">>>")
 
         test <@ HttpStatusCode.OK = response.StatusCode @>
         test <@ 1 = event.SequenceNumber @>

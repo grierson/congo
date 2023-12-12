@@ -5,17 +5,21 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
+
 open System.Collections.Generic
 
-open Offers
+open SpecialOffers.API.Offers
+open SpecialOffers.API.Events
+open SpecialOffers.API.DateTimeService
 
 let webApp = Offers.routes
 
 let configureApp (app: IApplicationBuilder) = app.UseGiraffe(webApp)
 
 let configureServices (services: IServiceCollection) =
-    let mutable offerStore = Dictionary<int, Offer>()
-    services.AddSingleton<IDictionary<int, Offer>>(offerStore) |> ignore
+    services.AddScoped<OfferStore, InMemoryOfferStore>() |> ignore
+    services.AddScoped<EventStore, InMemoryEventStore>() |> ignore
+    services.AddScoped<DateTimeService, NowDateTimeService>() |> ignore
     services.AddGiraffe() |> ignore
 
 type Program() =

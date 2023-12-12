@@ -97,4 +97,3 @@ app.Run()
 type Program() =
     class
     end
-    end

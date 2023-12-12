@@ -1,39 +1,50 @@
 module SpecialOffers.API.Offers
 
 open System
-open Microsoft.AspNetCore.Routing
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.DependencyInjection
-open System.Collections.Generic
 
 open Giraffe
 
 type Offer = { Id: int; Description: string }
 
+type OfferStore =
+    abstract member Get: int -> Option<Offer>
+    abstract member Add: Offer -> Offer
+
+type InMemoryOfferStore() =
+    let mutable counter = 0
+    let mutable offers = Map.empty<int, Offer>
+
+    member this.Get(id: int) =
+        Console.WriteLine(">>>GET")
+        Console.WriteLine(offers)
+        Console.WriteLine(">>>GET")
+        Map.tryFind id offers
+
+    member this.Add(offer: Offer) =
+        counter <- counter + 1
+        let newOffer = { offer with Id = counter }
+        offers <- Map.add newOffer.Id newOffer offers
+        newOffer
+
+    interface OfferStore with
+        member this.Get(id: int) = this.Get(id)
+        member this.Add(offer: Offer) = this.Add(offer)
+
 let getOfferHandler (id: int) : HttpHandler =
     (fun (next: HttpFunc) (ctx: HttpContext) ->
+        let offerstore = ctx.GetService<OfferStore>()
 
-        let offers =
-            ctx.RequestServices.GetService(typeof<IDictionary<int, Offer>>) :?> IDictionary<int, Offer>
-
-        (match offers.TryGetValue id with
-         | (true, offer) -> Successful.OK offer next ctx
-         | (false, _) -> RequestErrors.NOT_FOUND "" next ctx))
+        (match offerstore.Get id with
+         | Some offer -> Successful.OK offer next ctx
+         | None -> RequestErrors.NOT_FOUND "" next ctx))
 
 let addOfferHandler: HttpHandler =
     (fun (next: HttpFunc) (ctx: HttpContext) ->
         task {
             let! newOffer = ctx.BindJsonAsync<Offer>()
-
-            let mutable offers =
-                ctx.RequestServices.GetService(typeof<IDictionary<int, Offer>>) :?> IDictionary<int, Offer>
-
-            let id = 1
-            let newOffer = { newOffer with Id = id }
-            offers.Add(id, newOffer)
+            let offers = ctx.GetService<OfferStore>()
+            let newOffer = offers.Add(newOffer)
             return! Successful.CREATED newOffer next ctx
         })
 

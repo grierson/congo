@@ -1,10 +1,10 @@
-module DateTimeService
+module SpecialOffers.API.DateTimeService
 
 open System
 
-type IDateTimeService =
+type DateTimeService =
     abstract member Now: unit -> DateTimeOffset
 
-type DateTimeService() =
-    interface IDateTimeService with
+type NowDateTimeService() =
+    interface DateTimeService with
         member this.Now() = DateTimeOffset.UtcNow

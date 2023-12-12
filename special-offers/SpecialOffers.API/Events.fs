@@ -1,7 +1,7 @@
-module Events
+module SpecialOffers.API.Events
 
 open System
-open DateTimeService
+open SpecialOffers.API.DateTimeService
 open System.Threading
 
 type EventFeedEvent =
@@ -10,27 +10,29 @@ type EventFeedEvent =
       Name: string
       Content: obj }
 
-let mutable currentSequenceNumber = 0
-let seqNumber = Interlocked.Increment(&currentSequenceNumber)
+type EventStore =
+    abstract member RaiseEvent: string -> obj -> unit
 
-let addEvent
-    (eventStore: EventFeedEvent list)
-    (datetimeservice: IDateTimeService)
-    (seqNumber: int)
-    (name: string)
-    (content: obj)
-    =
-    let now = datetimeservice.Now()
+type InMemoryEventStore(datetimeservice: DateTimeService) =
+    let mutable counter = 0
+    let mutable events = []
 
-    let newEvent =
-        { SequenceNumber = seqNumber
-          OccurredAt = now
-          Name = name
-          Content = content }
+    interface EventStore with
+        member this.RaiseEvent (name: string) (content: obj) =
+            let now = datetimeservice.Now()
 
-    newEvent :: eventStore
+            let event =
+                { OccurredAt = now
+                  SequenceNumber = counter
+                  Name = name
+                  Content = content }
+
+            counter <- counter + 1
+            events <- event :: events
 
 let getEvents (database: EventFeedEvent list) (startRange: int) (endRange: int) : EventFeedEvent list =
     database
+    |> List.filter (fun event -> event.SequenceNumber >= startRange && event.SequenceNumber <= endRange)
+    |> List.sortBy _.SequenceNumber
     |> List.filter (fun event -> event.SequenceNumber >= startRange && event.SequenceNumber <= endRange)
     |> List.sortBy _.SequenceNumber

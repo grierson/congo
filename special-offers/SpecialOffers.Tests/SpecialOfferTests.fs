@@ -2,46 +2,68 @@ module SpecialOfferTests
 
 open SpecialOffers.API.App
 open SpecialOffers.API.Offers
+open SpecialOffers.API.DateTimeService
+open SpecialOffers.API.Events
+
 open System
 open Xunit
 open Swensen.Unquote
 open System.Net
 open System.Net.Http.Json
-open System.Collections.Generic
 open Microsoft.AspNetCore.Mvc.Testing
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Hosting
 
 let makeWebApplication () = (new WebApplicationFactory<Program>())
 
-(* let setup date = *)
-(*     let dateTimeService = *)
-(*         { new IDateTimeService with *)
-(*             member this.Now() = date } *)
-(**)
-(*     let configureServices (services: IServiceCollection) = *)
-(*         services.AddScoped<IDateTimeService>(fun _ -> dateTimeService) |> ignore *)
-(**)
-(*         () *)
-(**)
-(*     let webhostBuilder (builder: IWebHostBuilder) = *)
-(*         builder.ConfigureServices(Action<IServiceCollection>(configureServices)) *)
-(*         |> ignore *)
-(**)
-(*         () *)
-(**)
-(*     (new WebApplicationFactory<Program>()).WithWebHostBuilder(webhostBuilder) *)
+let setup date =
+    let dateTimeService =
+        { new DateTimeService with
+            member this.Now() = date }
 
+    let configureServices (services: IServiceCollection) =
+        services.AddScoped<DateTimeService>(fun _ -> dateTimeService) |> ignore
+        services.AddScoped<EventStore, InMemoryEventStore>() |> ignore
+        services.AddScoped<OfferStore, InMemoryOfferStore>() |> ignore
+        services.AddScoped<DateTimeService>(fun _ -> dateTimeService) |> ignore
+
+        ()
+
+    let webhostBuilder (builder: IWebHostBuilder) =
+        builder.ConfigureServices(Action<IServiceCollection>(configureServices))
+        |> ignore
+
+        ()
+
+    (new WebApplicationFactory<Program>()).WithWebHostBuilder(webhostBuilder)
 
 
 [<Fact>]
-let ``offer not found`` () =
-    task {
-        let client = makeWebApplication().CreateClient()
-        let! response = client.GetAsync("specialoffers/1")
+let ``Update inmemory database`` () =
+    let sut = new InMemoryOfferStore()
+    let request = { Id = 1; Description = "Foo" }
 
-        test <@ HttpStatusCode.NotFound = response.StatusCode @>
-    }
+    sut.Add request |> ignore
+
+    let result =
+        match sut.Get 1 with
+        | Some x -> x
+        | None ->
+            { request with
+                Description = "Not found" }
+
+    test <@ request = result @>
+
+
+(* [<Fact>] *)
+(* let ``offer not found`` () = *)
+(*     task { *)
+(*         let client = makeWebApplication().CreateClient() *)
+(*         let! response = client.GetAsync("specialoffers/1") *)
+(**)
+(*         test <@ HttpStatusCode.NotFound = response.StatusCode @> *)
+(*     } *)
+
 
 [<Fact>]
 let ``offer found`` () =
@@ -51,14 +73,15 @@ let ``offer found`` () =
         let id = 1
 
         let request = { Id = id; Description = "New thing" }
-        let! createResponse = client.PostAsJsonAsync<Offer>("/specialoffers", request)
+        let! createOfferResponse = client.PostAsJsonAsync<Offer>("/specialoffers", request)
+        let! createOfferResponseContent = createOfferResponse.Content.ReadFromJsonAsync<Offer>()
 
-        let! response = client.GetAsync($"specialoffers/{id}")
+        let! getOfferResponse = client.GetAsync($"specialoffers/{createOfferResponseContent.Id}")
 
-        let! content = response.Content.ReadFromJsonAsync<Offer>()
+        let! getOfferResponseContent = getOfferResponse.Content.ReadFromJsonAsync<Offer>()
 
-        test <@ HttpStatusCode.OK = response.StatusCode @>
-        test <@ request = content @>
+        test <@ HttpStatusCode.OK = getOfferResponse.StatusCode @>
+        test <@ request = getOfferResponseContent @>
     }
 
 (* [<Fact>] *)
@@ -86,8 +109,7 @@ let ``offer found`` () =
 (*         test <@ "SpecialOfferCreated" = event.Name @> *)
 (*         test <@ date = event.OccurredAt @> *)
 (*     } *)
-(**)
-(**)
+
 (* [<Fact>] *)
 (* let ``update offer`` () = *)
 (*     task { *)

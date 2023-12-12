@@ -1,12 +1,8 @@
 open System
 open System.Collections.Generic
 open System.Threading
-open FSharp.MinimalApi.Builder
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Http.HttpResults
 open Microsoft.Extensions.DependencyInjection
-open type TypedResults
 
 type Offer = { Id: int; Description: string }
 

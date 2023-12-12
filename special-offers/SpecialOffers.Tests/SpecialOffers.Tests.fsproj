@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SpecialOffers\SpecialOffers.fsproj" />
+    <ProjectReference Include="..\SpecialOffers.API\SpecialOffers.API.fsproj" />
   </ItemGroup>
 
 </Project>

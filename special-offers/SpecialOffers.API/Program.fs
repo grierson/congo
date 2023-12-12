@@ -1,21 +1,26 @@
 module SpecialOffers.API.App
 
-open System
-open System.IO
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
+open System.Collections.Generic
 
-let webApp = choose [ route "/ping" >=> text "pong" ]
+open Offers
 
+let webApp = Offers.routes
 
-let configureApp (app: IApplicationBuilder) = app.UseGiraffe webApp
+let configureApp (app: IApplicationBuilder) = app.UseGiraffe(webApp)
 
-let configureServices (services: IServiceCollection) = services.AddGiraffe() |> ignore
+let configureServices (services: IServiceCollection) =
+    let mutable offerStore = Dictionary<int, Offer>()
+    services.AddSingleton<IDictionary<int, Offer>>(offerStore) |> ignore
+    services.AddGiraffe() |> ignore
+
+type Program() =
+    class
+    end
 
 [<EntryPoint>]
 let main _ =

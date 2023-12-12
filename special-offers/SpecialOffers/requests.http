@@ -1,0 +1,7 @@
+GET http://localhost:5009/events
+Content-Type: application/json
+Accept: application/json
+
+###
+
+GET http://localhost:5009/other

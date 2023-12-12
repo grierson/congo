@@ -7,6 +7,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SpecialOffers.Tests", "Spec
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SpecialOffers", "SpecialOffers\SpecialOffers.fsproj", "{BDF3BF58-1D6F-41A1-B37F-C8272C210794}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SpecialOffers.API", "SpecialOffers.API\SpecialOffers.API.fsproj", "{0D7F2AB3-622C-4354-AB2E-7552E1DEBEF9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,5 +30,9 @@ Global
 		{BDF3BF58-1D6F-41A1-B37F-C8272C210794}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDF3BF58-1D6F-41A1-B37F-C8272C210794}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDF3BF58-1D6F-41A1-B37F-C8272C210794}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D7F2AB3-622C-4354-AB2E-7552E1DEBEF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D7F2AB3-622C-4354-AB2E-7552E1DEBEF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D7F2AB3-622C-4354-AB2E-7552E1DEBEF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D7F2AB3-622C-4354-AB2E-7552E1DEBEF9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

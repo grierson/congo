@@ -2,7 +2,6 @@ open System
 open System.Collections.Generic
 open System.Threading
 open FSharp.MinimalApi.Builder
-open FSharp.MinimalApi
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.HttpResults
@@ -25,7 +24,7 @@ type DateTimeService() =
         member this.Now() = DateTimeOffset.UtcNow
 
 let mutable currentSequenceNumber = 0
-let mutable database = List.Empty
+let mutable database = List<EventFeedEvent>()
 
 let raiseEvent (datetimeservice: IDateTimeService) (name: string) (content: obj) =
     let seqNumber = Interlocked.Increment(&currentSequenceNumber)
@@ -37,7 +36,7 @@ let raiseEvent (datetimeservice: IDateTimeService) (name: string) (content: obj)
           Name = name
           Content = content }
 
-    database <- newEvent :: database
+    database.Add(newEvent)
 
 let getEvents (database: EventFeedEvent list) (startRange: int) (endRange: int) : EventFeedEvent list =
     database
@@ -69,42 +68,27 @@ let routes =
                          offers.Add(req.offer.Id, req.offer)
                          !! Created($"/specialoffers/{req.offer.Id}/", req.offer)))
 
-            delete
-                "{id:int}"
-                produces<Ok, NotFound>
-                (fun
-                    (req:
-                        {| id: int
-                           datetimeservice: IDateTimeService |}) ->
-                    (match offers.TryGetValue(req.id) with
-                     | true, _ ->
-                         raiseEvent req.datetimeservice "SpecialOfferDeleted" req.id
-                         offers.Remove(req.id) |> ignore
-                         !! Ok()
-                     | false, _ -> !! NotFound()))
+            delete "{id:int}" produces<Ok, NotFound> (fun (req: {| id: int |}) ->
+                (match offers.TryGetValue(req.id) with
+                 | true, _ ->
+                     offers.Remove(req.id) |> ignore
+                     !! Ok()
+                 | false, _ -> !! NotFound()))
 
-            put
-                "{id:int}"
-                produces<Ok<Offer>, NotFound>
-                (fun
-                    (req:
-                        {| offer: Offer
-                           datetimeservice: IDateTimeService |}) ->
-                    (match offers.TryGetValue(req.offer.Id) with
-                     | true, _ ->
-                         raiseEvent req.datetimeservice "SpecialOfferUpdated" req.offer
-                         offers[req.offer.Id] <- req.offer
-                         !! Ok(req.offer)
-                     | false, _ -> !! NotFound()))
+            put "{id:int}" produces<Ok<Offer>, NotFound> (fun (req: {| offer: Offer |}) ->
+                (match offers.TryGetValue(req.offer.Id) with
+                 | true, _ ->
+                     offers[req.offer.Id] <- req.offer
+                     !! Ok(req.offer)
+                 | false, _ -> !! NotFound()))
         }
 
         routeGroup "events" {
-            get "" produces<Ok<EventFeedEvent list>, BadRequest> (fun (req: {| startRange: int; endRange: int |}) ->
-                if (req.startRange < 0 || req.endRange < req.startRange) then
+            get "" produces<Ok<List<EventFeedEvent>list>, BadRequest> (fun (req: {| startRange: int; endRange : int |}) ->
+                if (req.startRange < 0 || req.endRange < start) then
                     !! BadRequest()
                 else
-                    let events = getEvents database req.startRange req.endRange
-                    !! Ok(events))
+                    !! Ok(getEvents database req.startRange req.endRange))
         }
     }
 
@@ -116,4 +100,5 @@ app.Run()
 
 type Program() =
     class
+    end
     end

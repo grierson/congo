@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SpecialOffers.Tests", "SpecialOffers.Tests\SpecialOffers.Tests.fsproj", "{F1D9C9CA-292B-4BBF-9EE6-49CF2C841F05}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SpecialOffers", "SpecialOffers\SpecialOffers.fsproj", "{BDF3BF58-1D6F-41A1-B37F-C8272C210794}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SpecialOffers.API", "SpecialOffers.API\SpecialOffers.API.fsproj", "{0D7F2AB3-622C-4354-AB2E-7552E1DEBEF9}"
 EndProject
 Global

@@ -9,7 +9,8 @@ var start = await GetStartIdFromDatastore();
 var end = 100;
 var client = new HttpClient();
 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-using var resp = await client.GetAsync(new Uri($"http://special-offers:5002/events?start={start}&end={end}"));
+using var resp = await client.GetAsync(new Uri($"http://special-offers:5002/events?startRange={start}&endRange={end}"));
+
 await ProcessEvents(await resp.Content.ReadAsStreamAsync());
 await SaveStartIdToDataStore(start);
 

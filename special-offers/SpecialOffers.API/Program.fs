@@ -30,7 +30,10 @@ let main _ =
     Host
         .CreateDefaultBuilder()
         .ConfigureWebHostDefaults(fun webHostBuilder ->
-            webHostBuilder.Configure(configureApp).ConfigureServices(configureServices)
+            webHostBuilder
+                .Configure(configureApp)
+                .ConfigureServices(configureServices)
+                .UseKestrel(fun options -> options.Listen(System.Net.IPAddress.Any, 80) |> ignore)
             |> ignore)
         .Build()
         .Run()

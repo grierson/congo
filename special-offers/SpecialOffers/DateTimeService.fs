@@ -1,4 +1,4 @@
-module SpecialOffers.API.DateTimeService
+module DateTimeService
 
 open System
 

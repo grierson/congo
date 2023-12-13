@@ -1,7 +1,7 @@
-module SpecialOffers.API.Events
+module Events
 
 open System
-open SpecialOffers.API.DateTimeService
+open DateTimeService
 open Microsoft.AspNetCore.Http
 open Giraffe
 

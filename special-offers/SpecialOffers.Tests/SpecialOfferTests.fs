@@ -1,9 +1,9 @@
 module SpecialOfferTests
 
-open SpecialOffers.API.App
-open SpecialOffers.API.Offers
-open SpecialOffers.API.DateTimeService
-open SpecialOffers.API.Events
+open SpecialOffers
+open Offers
+open DateTimeService
+open Events
 
 open System
 open Xunit

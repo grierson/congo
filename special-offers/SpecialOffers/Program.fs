@@ -1,4 +1,4 @@
-module SpecialOffers.API.App
+module SpecialOffers
 
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -6,12 +6,11 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
-open SpecialOffers.API.Events
-open SpecialOffers.API.Offers
-open SpecialOffers.API.DateTimeService
+open Events
+open Offers
+open DateTimeService
 
-let webApp =
-    choose [ SpecialOffers.API.Offers.routes; SpecialOffers.API.Events.routes ]
+let webApp = choose [ Offers.routes; Events.routes ]
 
 let configureApp (app: IApplicationBuilder) = app.UseGiraffe(webApp)
 

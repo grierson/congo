@@ -1,9 +1,9 @@
-module SpecialOffers.API.Offers
+module Offers
 
 open Microsoft.AspNetCore.Http
 open Giraffe
 
-open SpecialOffers.API.Events
+open Events
 
 type Offer = { Id: int; Description: string }
 

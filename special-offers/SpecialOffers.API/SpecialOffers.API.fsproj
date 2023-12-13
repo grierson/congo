@@ -12,8 +12,8 @@
 
   <ItemGroup>
     <Compile Include="DateTimeService.fs" />
-    <Compile Include="Offers.fs" />
     <Compile Include="Events.fs" />
+    <Compile Include="Offers.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

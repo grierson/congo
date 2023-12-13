@@ -6,19 +6,18 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
 
-open System.Collections.Generic
-
-open SpecialOffers.API.Offers
 open SpecialOffers.API.Events
+open SpecialOffers.API.Offers
 open SpecialOffers.API.DateTimeService
 
-let webApp = Offers.routes
+let webApp =
+    choose [ SpecialOffers.API.Offers.routes; SpecialOffers.API.Events.routes ]
 
 let configureApp (app: IApplicationBuilder) = app.UseGiraffe(webApp)
 
 let configureServices (services: IServiceCollection) =
-    services.AddScoped<OfferStore, InMemoryOfferStore>() |> ignore
-    services.AddScoped<EventStore, InMemoryEventStore>() |> ignore
+    services.AddSingleton<OfferStore, InMemoryOfferStore>() |> ignore
+    services.AddSingleton<EventStore, InMemoryEventStore>() |> ignore
     services.AddScoped<DateTimeService, NowDateTimeService>() |> ignore
     services.AddGiraffe() |> ignore
 

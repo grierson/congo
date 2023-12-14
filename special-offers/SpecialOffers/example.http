@@ -10,11 +10,10 @@ Accept: application/json
 
 POST {{host}}/specialoffers
 Content-Type: application/json
-Accept: application/json
 
 {
-  "Id": 1,
-  "Description":"This cool new offer",
+    "Id": 123,
+    "Description": "This is a special offer"
 }
 
 ###

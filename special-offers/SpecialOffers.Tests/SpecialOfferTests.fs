@@ -57,6 +57,11 @@ let ``offer found`` () =
 
         let request = { Id = id; Description = "New thing" }
         let! createOfferResponse = client.PostAsJsonAsync<Offer>("/specialoffers", request)
+
+        Console.WriteLine(">>>")
+        Console.WriteLine(createOfferResponse)
+        Console.WriteLine(">>>")
+
         let! createOfferResponseContent = createOfferResponse.Content.ReadFromJsonAsync<Offer>()
 
         let! getOfferResponse = client.GetAsync($"/specialoffers/{createOfferResponseContent.Id}")

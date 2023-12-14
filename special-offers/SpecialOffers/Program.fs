@@ -1,5 +1,7 @@
 module SpecialOffers
 
+open System
+open Microsoft.Extensions.Logging
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
@@ -12,7 +14,17 @@ open DateTimeService
 
 let webApp = choose [ Offers.routes; Events.routes ]
 
-let configureApp (app: IApplicationBuilder) = app.UseGiraffe(webApp)
+let errorHandler (ex: Exception) (logger: ILogger) =
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse >=> ServerErrors.INTERNAL_ERROR ex.Message
+
+let configureLogging (builder: ILoggingBuilder) =
+    builder.AddConsole().AddDebug()
+
+    |> ignore
+
+let configureApp (app: IApplicationBuilder) =
+    app.UseGiraffeErrorHandler(errorHandler).UseGiraffe(webApp)
 
 let configureServices (services: IServiceCollection) =
     services.AddSingleton<OfferStore, InMemoryOfferStore>() |> ignore
@@ -32,7 +44,9 @@ let main _ =
             webHostBuilder
                 .Configure(configureApp)
                 .ConfigureServices(configureServices)
+                .ConfigureLogging(configureLogging)
                 .UseKestrel(fun options -> options.Listen(System.Net.IPAddress.Any, 8080) |> ignore)
+
             |> ignore)
         .Build()
         .Run()

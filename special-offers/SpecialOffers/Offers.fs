@@ -1,10 +1,12 @@
 module Offers
 
 open Microsoft.AspNetCore.Http
+open System.Text.Json
 open Giraffe
 
 open Events
 
+[<CLIMutable>]
 type Offer = { Id: int; Description: string }
 
 type OfferStore =
@@ -44,9 +46,12 @@ let getOfferHandler (id: int) : HttpHandler =
 let addOfferHandler: HttpHandler =
     (fun (next: HttpFunc) (ctx: HttpContext) ->
         task {
-            let! offer = ctx.BindJsonAsync<Offer>()
             let offerStore = ctx.GetService<OfferStore>()
             let eventStore = ctx.GetService<EventStore>()
+
+            let! body = ctx.ReadBodyFromRequestAsync()
+            let offer = JsonSerializer.Deserialize<Offer>(body)
+
             eventStore.RaiseEvent "SpecialOfferCreated" offer
             let newOffer = offerStore.Add(offer)
 
@@ -56,7 +61,8 @@ let addOfferHandler: HttpHandler =
 let updateOfferHandler (id: int) : HttpHandler =
     (fun (next: HttpFunc) (ctx: HttpContext) ->
         task {
-            let! updated_offer = ctx.BindJsonAsync<Offer>()
+            let! body = ctx.ReadBodyFromRequestAsync()
+            let updated_offer = JsonSerializer.Deserialize<Offer>(body)
             let offerStore = ctx.GetService<OfferStore>()
             let eventStore = ctx.GetService<EventStore>()
 

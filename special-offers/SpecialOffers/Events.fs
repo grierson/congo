@@ -1,10 +1,10 @@
 module Events
 
 open System
-open DateTimeService
 open Microsoft.AspNetCore.Http
 open Giraffe
 
+open DateTimeService
 
 type EventFeedEvent =
     { SequenceNumber: int
@@ -18,7 +18,7 @@ type EventStore =
 
 type InMemoryEventStore(datetimeservice: DateTimeService) =
     let mutable counter = 1
-    let mutable events = []
+    let mutable events = List.empty<EventFeedEvent>
 
     interface EventStore with
         member this.Get (startRange: int) (endRange: int) =

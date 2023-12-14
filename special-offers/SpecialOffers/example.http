@@ -1,4 +1,5 @@
-@host = http://0.0.0.0:5001
+@host = http://0.0.0.0:8080
+# @host = http://0.0.0.0:5002
 
 ###
 
@@ -6,3 +7,17 @@ GET {{host}}/events?startRange=1&endRange=10
 Accept: application/json
 
 ###
+
+POST {{host}}/specialoffers
+Content-Type: application/json
+Accept: application/json
+
+{
+  "Id": 1,
+  "Description":"This cool new offer",
+}
+
+###
+
+GET {{host}}/specialoffers/1
+Accept: application/json

@@ -14,28 +14,24 @@ type OfferStore =
     abstract member Delete: int -> unit
 
 type InMemoryOfferStore() =
-    let mutable counter = 0
+    let mutable counter = 1
     let mutable offers = Map.empty<int, Offer>
 
-    member this.Get(id: int) = Map.tryFind id offers
-
-    member this.Add(offer: Offer) =
-        counter <- counter + 1
-        let newOffer = { offer with Id = counter }
-        offers <- Map.add newOffer.Id newOffer offers
-        newOffer
-
-    member this.Update(offer: Offer) =
-        offers <- Map.add offer.Id offer offers
-        offer
-
-    member this.Delete(id: int) = offers <- Map.remove id offers
-
     interface OfferStore with
-        member this.Get(id: int) = this.Get(id)
-        member this.Add(offer: Offer) = this.Add(offer)
-        member this.Update(offer: Offer) = this.Update(offer)
-        member this.Delete(id: int) = this.Delete(id)
+        member this.Get(id: int) = Map.tryFind id offers
+
+        member this.Add(offer: Offer) =
+            let newOffer = { offer with Id = counter }
+            offers <- Map.add newOffer.Id newOffer offers
+            counter <- counter + 1
+            newOffer
+
+        member this.Update(offer: Offer) =
+            offers <- Map.add offer.Id offer offers
+            offer
+
+        member this.Delete(id: int) = offers <- Map.remove id offers
+
 
 let getOfferHandler (id: int) : HttpHandler =
     (fun (next: HttpFunc) (ctx: HttpContext) ->
@@ -56,7 +52,6 @@ let addOfferHandler: HttpHandler =
 
             return! Successful.CREATED newOffer next ctx
         })
-
 
 let updateOfferHandler (id: int) : HttpHandler =
     (fun (next: HttpFunc) (ctx: HttpContext) ->

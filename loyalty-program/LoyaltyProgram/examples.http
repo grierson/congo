@@ -1,0 +1,5 @@
+@host = http://localhost:8080
+# @host = http://localhost:5051
+
+GET {{host}}/events?startRange=1&endRange=10
+Accept: application/json

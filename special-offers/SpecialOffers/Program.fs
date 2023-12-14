@@ -32,7 +32,7 @@ let main _ =
             webHostBuilder
                 .Configure(configureApp)
                 .ConfigureServices(configureServices)
-                .UseKestrel(fun options -> options.Listen(System.Net.IPAddress.Any, 80) |> ignore)
+                .UseKestrel(fun options -> options.Listen(System.Net.IPAddress.Any, 8080) |> ignore)
             |> ignore)
         .Build()
         .Run()

@@ -1,0 +1,58 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: loyalty-program
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loyalty-program
+  template:
+    metadata:
+      labels:
+        app: loyalty-program
+    spec:
+      containers:
+        - name: loyalty-program
+          image: loyalty-program:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: STARTUPDLL
+              value: api/LoyaltyProgram.dll
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loyalty-program-consumer
+spec:
+  schedule: '*/1 * * * *'
+  startingDeadlineSeconds: 30
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: loyalty-program
+              image: loyalty-program:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: STARTUPDLL
+                  value: consumer/EventConsumer.dll
+          restartPolicy: Never
+  concurrencyPolicy: Forbid
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loyalty-program
+spec:
+  type: LoadBalancer
+  ports:
+    - name: loyalty-program
+      port: 5001
+      targetPort: 80
+  selector:
+    app: loyalty-program

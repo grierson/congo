@@ -12,11 +12,22 @@ POST {{host}}/specialoffers
 Content-Type: application/json
 
 {
-    "Id": 123,
+    "Id": 1,
     "Description": "This is a special offer"
 }
 
 ###
 
-GET {{host}}/specialoffers/1
+GET {{host}}/specialoffers/2
 Accept: application/json
+
+
+###
+
+PUT {{host}}/specialoffers/2
+Content-Type: application/json
+
+{
+    "Id": 2,
+    "Description": "Other description"
+}

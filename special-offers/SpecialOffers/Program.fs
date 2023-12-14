@@ -45,7 +45,7 @@ let main _ =
                 .Configure(configureApp)
                 .ConfigureServices(configureServices)
                 .ConfigureLogging(configureLogging)
-                .UseKestrel(fun options -> options.Listen(System.Net.IPAddress.Any, 8080) |> ignore)
+                .UseKestrel(fun options -> options.Listen(System.Net.IPAddress.Any, 80) |> ignore)
 
             |> ignore)
         .Build()

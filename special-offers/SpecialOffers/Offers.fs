@@ -50,7 +50,9 @@ let addOfferHandler: HttpHandler =
             let eventStore = ctx.GetService<EventStore>()
 
             let! body = ctx.ReadBodyFromRequestAsync()
-            let offer = JsonSerializer.Deserialize<Offer>(body)
+
+            let options = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
+            let offer = JsonSerializer.Deserialize<Offer>(body, options)
 
             eventStore.RaiseEvent "SpecialOfferCreated" offer
             let newOffer = offerStore.Add(offer)
@@ -62,7 +64,8 @@ let updateOfferHandler (id: int) : HttpHandler =
     (fun (next: HttpFunc) (ctx: HttpContext) ->
         task {
             let! body = ctx.ReadBodyFromRequestAsync()
-            let updated_offer = JsonSerializer.Deserialize<Offer>(body)
+            let options = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
+            let updated_offer = JsonSerializer.Deserialize<Offer>(body, options)
             let offerStore = ctx.GetService<OfferStore>()
             let eventStore = ctx.GetService<EventStore>()
 
@@ -98,3 +101,7 @@ let routes: HttpHandler =
                   [ GET >=> getOfferHandler id
                     PUT >=> updateOfferHandler id
                     DELETE >=> deleteOfferHandler id ]) ]
+
+
+let json = @"{""id"": 1, ""description"": ""hello""}";
+let offers = JsonSerializer.Deserialize<Offer>(json);

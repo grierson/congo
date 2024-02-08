@@ -1,6 +1,6 @@
 @ProductCatalog_HostAddress = http://localhost:5236
 
-GET {{ProductCatalog_HostAddress}}/weatherforecast/
+GET {{ProductCatalog_HostAddress}}/products?productIds=[1,42]
 Accept: application/json
 
 ###

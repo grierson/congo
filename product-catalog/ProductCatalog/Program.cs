@@ -1,15 +1,25 @@
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IProductStore, ProductStore>();
+builder.Services.AddResponseCaching();
 var app = builder.Build();
+app.UseResponseCaching();
 
 static IEnumerable<int> ParseProductIdsFromQueryString(string productIdsString) => productIdsString.Split(',').Select(s => s.Replace("[", "").Replace("]", "")).Select(int.Parse);
 
-app.MapGet("/products", (string productIds) =>
+app.MapGet("/products", (HttpContext context, string productIds) =>
 {
     var productStore = app.Services.GetRequiredService<IProductStore>();
     var products = productStore.GetProductsByIds(ParseProductIdsFromQueryString(productIds));
-    return Results.Ok(products);
-});
+
+    var response = context.Response;
+    response.Headers.Add("Cache-Control", "public, max-age=60");
+
+    return Results.Ok(new
+    {
+        Date = DateTime.Now,
+        Products = products
+    });
+}).CacheOutput();
 
 app.Run();
 

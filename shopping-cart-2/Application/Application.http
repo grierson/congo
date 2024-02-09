@@ -1,6 +1,20 @@
 @Application_HostAddress = http://localhost:5024
 
-GET {{Application_HostAddress}}/weatherforecast/
-Accept: application/json
+GET {{Application_HostAddress}}/health
 
 ###
+
+GET {{Application_HostAddress}}/events
+Content-Type: application/json
+
+###
+
+POST {{Application_HostAddress}}/cart
+Content-Type: application/json
+
+{ "Name": "Shopping Cart 1" }
+
+###
+
+GET {{Application_HostAddress}}/cart/e00891c3-2006-45f5-bdc6-9ad5788275b2
+Content-Type: application/json

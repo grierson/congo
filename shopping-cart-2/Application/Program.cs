@@ -1,105 +1,99 @@
+using System.Text.Json;
+using Marten;
+using Marten.Events.Aggregation;
+using Marten.Events.Projections;
+using Weasel.Core;
+
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<IShoppingCartRepository, ShoppingCartRepository>();
+builder.Services.AddMarten(options =>
+{
+    options.Connection("Host=localhost;Port=5432;Database=cart;Username=postgres;password=postgres;");
+    options.AutoCreateSchemaObjects = AutoCreate.All;
+
+    options.Events.AddEventType(typeof(CreatedShoppingCartEvent));
+    options.Events.AddEventType(typeof(AddedShoppingCartItemEvent));
+
+    options.Projections.Add<ShoppingCartProjection>(ProjectionLifecycle.Inline);
+})
+.UseLightweightSessions();
+
 var app = builder.Build();
 
 app.UseHttpsRedirection();
-
-app
-.MapGroup("/shoppingcart")
-.ShoppingCartRoutes();
 
 app.MapGet("/health", () =>
 {
     return "Healthy";
 });
 
-app.MapGet("/events", (IShoppingCartRepository repository) =>
+app.MapGet("/events", (IDocumentSession session) =>
 {
-    return repository.Events();
+    Console.WriteLine("IRUN");
+    var events = session.Events.QueryAllRawEvents().ToList();
+    Console.WriteLine("IRUN 2");
+    Console.WriteLine("----");
+    Console.WriteLine(events);
+    foreach (var @event in events)
+    {
+        Console.WriteLine(@event.Data.ToString());
+    }
+    Console.WriteLine("----");
+    /* var json = JsonSerializer.Serialize(events); */
+    /* Console.WriteLine("IRUN 3"); */
+    return "Events";
+});
+
+app.MapGet("/cart", () =>
+{
+    return "Cart";
+});
+
+app.MapPost("/cart", async (IDocumentSession session, CreateShoppingCartRequest request) =>
+{
+    var createEvent = new CreatedShoppingCartEvent(Guid.NewGuid(), request.Name);
+    session.Events.StartStream<ShoppingCart>(createEvent);
+    await session.SaveChangesAsync();
+    return "Created";
+});
+
+app.MapGet("/cart/{id:guid}", (IQuerySession session, Guid id) =>
+{
+    Console.WriteLine("ID: " + id);
+    return session.Events.AggregateStreamAsync<ShoppingCart>(id);
 });
 
 app.Run();
 
-
-public interface IShoppingCartRepository
-{
-    Task<ShoppingCart> Project(int id);
-    void Raise(Event domainEvent);
-    IEnumerable<Event> Events();
-}
-
 public record CreateShoppingCartRequest(string Name);
 public record AddShoppingCartItemRequest(string Name, int Quantity);
-public record Event(Guid Id, int StreamId, DateTime OccurredAt, string Type, object Payload);
-public record CreatedShoppingCartEvent(int CartId, string Name) : Event(Guid.NewGuid(), CartId, DateTime.UtcNow, "ShoppingCartCreated", new { Name });
-public record AddedShoppingCartItemEvent(int CartId, string Name, int Quantity) : Event(Guid.NewGuid(), CartId, DateTime.UtcNow, "AddedShoppingCartItem", new { Name, Quantity });
 
 public record ShoppingCartItem(string Name, int Quantity);
-public record ShoppingCart
+public class ShoppingCart
 {
-    public int Id { get; init; } = 1;
-    public string Name { get; init; } = string.Empty;
-    public IEnumerable<ShoppingCartItem> Items { get; init; } = new List<ShoppingCartItem>();
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = string.Empty;
+    public IEnumerable<ShoppingCartItem> Items { get; set; } = new List<ShoppingCartItem>();
 }
 
-public class ShoppingCartRepository : IShoppingCartRepository
+public class ShoppingCartProjection : SingleStreamProjection<ShoppingCart>
 {
-    private List<Event> _events = new List<Event>();
+    public ShoppingCartProjection() { }
 
-    public IEnumerable<Event> Events()
+    public void Apply(CreatedShoppingCartEvent @event, ShoppingCart cart)
     {
-        return _events;
+        cart.Name = @event.Name;
     }
 
-    public Task<ShoppingCart> Project(int id)
+    public void Apply(AddedShoppingCartItemEvent @event, ShoppingCart cart)
     {
-        var events = _events.Where(e => e.StreamId == id).ToList();
-
-        var state = events.Aggregate(new ShoppingCart(), (state, @event) =>
-        {
-            switch (@event)
-            {
-                case CreatedShoppingCartEvent createdShoppingCartEvent:
-                    return state with { Name = createdShoppingCartEvent.Name };
-                case AddedShoppingCartItemEvent addedShoppingCartItemEvent:
-                    return state with { Items = new List<ShoppingCartItem> { new ShoppingCartItem(addedShoppingCartItemEvent.Name, addedShoppingCartItemEvent.Quantity) } };
-                default:
-                    return state;
-            }
-        });
-
-        return Task.FromResult<ShoppingCart>(state);
+        cart.Items.Append(new ShoppingCartItem(@event.Name, @event.Quantity));
     }
 
-    public void Raise(Event domainEvent)
+    public ShoppingCart Create(CreatedShoppingCartEvent @event)
     {
-        _events.Add(domainEvent);
+        return new ShoppingCart();
     }
 }
 
-public static class RouteGroupExtensions
-{
-    public static RouteGroupBuilder ShoppingCartRoutes(this RouteGroupBuilder route)
-    {
-        route.MapGet("/{id}", async (IShoppingCartRepository repository, int id) =>
-        {
-            return await repository.Project(id);
-        });
-
-        route.MapPost("/", async (IShoppingCartRepository repository, CreateShoppingCartRequest request) =>
-        {
-            var @event = new CreatedShoppingCartEvent(1, request.Name);
-            repository.Raise(@event);
-            return await repository.Project(1);
-        });
-
-        route.MapPost("/{id}/items", async (IShoppingCartRepository repository, int id, AddShoppingCartItemRequest request) =>
-        {
-            var @event = new CreatedShoppingCartEvent(1, "hello");
-            repository.Raise(@event);
-            return await repository.Project(1);
-        });
-
-        return route;
-    }
-}
+public record CreatedShoppingCartEvent(Guid Id, string Name);
+public record AddedShoppingCartItemEvent(string Name, int Quantity);

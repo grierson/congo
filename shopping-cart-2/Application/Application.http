@@ -5,7 +5,6 @@ GET {{Application_HostAddress}}/health
 ###
 
 GET {{Application_HostAddress}}/events
-Content-Type: application/json
 
 ###
 
@@ -16,5 +15,13 @@ Content-Type: application/json
 
 ###
 
-GET {{Application_HostAddress}}/cart/e00891c3-2006-45f5-bdc6-9ad5788275b2
+GET {{Application_HostAddress}}/cart/0434a9fc-8130-47bb-a0c7-f984b07cc6be
+
+###
+
+POST {{Application_HostAddress}}/cart/0434a9fc-8130-47bb-a0c7-f984b07cc6be/items
 Content-Type: application/json
+
+{ "Name": "Milk", "Quantity": 2 }
+
+###

@@ -3,20 +3,28 @@ namespace Application.Tests;
 public class UnitTest1
 {
     [Fact]
-    public void Add_ShoppingCart_Item()
+    public void Create_ShoppingCart_Test()
     {
-        var repository = new ShoppingCartRepository();
+        var @event = new CreatedShoppingCartEvent("Test");
+        var cart = ShoppingCart.Create(@event);
+        Assert.Equal("Test", cart.Name);
+    }
 
-        repository.Raise(new CreatedShoppingCartEvent(1, "Shopping Cart 1"));
-        repository.Raise(new AddedShoppingCartItemEvent(1, "Item 1", 1));
+    [Fact]
+    public void Add_Item_To_ShoppingCart_Test()
+    {
+        var @create_event = new CreatedShoppingCartEvent("Test");
+        var cart = ShoppingCart.Create(@create_event);
 
-        var shoppingCart = repository.Project(1).Result;
-        var events = repository.Events();
+        const string product_name = "Item";
+        const int product_quantity = 1;
+        var add_item_event =
+            new AddedShoppingCartItemEvent(product_name, product_quantity);
 
-        Assert.Equal("Shopping Cart 1", shoppingCart.Name);
-        Assert.Single(shoppingCart.Items);
-        Assert.Equal("Item 1", shoppingCart.Items.First().Name);
-        Assert.Equal(1, shoppingCart.Items.First().Quantity);
-        Assert.Equal(2, events.Count());
+        var new_cart = cart.Apply(add_item_event);
+
+        Assert.Single(new_cart.Items);
+        Assert.Equal("Item", new_cart.Items.First().Name);
+        Assert.Equal(1, new_cart.Items.First().Quantity);
     }
 }

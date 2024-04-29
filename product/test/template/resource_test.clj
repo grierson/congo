@@ -106,9 +106,11 @@
 
 (deftest get-event-test
   (let [{:keys [address]} (extract @test-system)
-        name "alice"
+        product {:name "shirt"
+                 :description "thing"
+                 :price 10}
         _  (-> (navigator/discover address)
-               (navigator/post :products {:name name}))
+               (navigator/post :products product))
         navigator (-> (navigator/discover address)
                       (navigator/get :events))
         resource (navigator/resource navigator)
@@ -121,38 +123,53 @@
     (testing "Calling GET returns 200"
       (is (= 200 (navigator/status event-navigator))))
     (testing "properties"
-      (is (= name (hal/get-property event-resource :name)))
+      (is (= (:name product) (hal/get-property event-resource :name)))
+      (is (= (:description product) (hal/get-property event-resource :description)))
+      (is (= (:price product) (hal/get-property event-resource :price)))
       (is (= "product-created" (hal/get-property event-resource :type))))))
 
 (deftest post-products-test
   (let [{:keys [address]} (extract @test-system)
-        name "alice"
+        product {:name "pants"
+                 :description "two legs"
+                 :price 10}
         navigator (-> (navigator/discover address {:follow-redirects false})
-                      (navigator/post :products {:name name}))
+                      (navigator/post :products product))
         resource  (navigator/resource navigator)]
     (testing "Calling POST returns 201"
       (is (= 201 (navigator/status navigator))))
     (testing "properties"
-      (is (= name (hal/get-property resource :name))))))
+      (is (= (:name product) (hal/get-property resource :name)))
+      (is (= (:description product) (hal/get-property resource :description)))
+      (is (= (:price product) (hal/get-property resource :price))))))
 
 (deftest get-product-test
   (let [{:keys [address]} (extract @test-system)
-        name "alice"
+        product {:name "shirt"
+                 :description "two sleves"
+                 :price 10}
         navigator  (-> (navigator/discover address)
-                       (navigator/post :products {:name name}))
+                       (navigator/post :products product))
         resource (navigator/resource navigator)]
     (testing "Calling GET returns 200"
       (is (= 200 (navigator/status navigator))))
     (testing "properties"
-      (is (= name (hal/get-property resource :name))))))
+      (is (= (:name product) (hal/get-property resource :name)))
+      (is (= (:description product) (hal/get-property resource :description)))
+      (is (= (:price product) (hal/get-property resource :price))))))
 
 (deftest get-products-test
   (let [{:keys [address]} (extract @test-system)
-        [name1 name2] ["alice" "bob"]
+        product1 {:name "pants"
+                  :description "two legs"
+                  :price 10}
+        product2 {:name "shirt"
+                  :description "two sleves"
+                  :price 20}
         _ (-> (navigator/discover address)
-              (navigator/post :products {:name name1}))
+              (navigator/post :products product1))
         _ (-> (navigator/discover address)
-              (navigator/post :products {:name name2}))
+              (navigator/post :products product2))
         navigator (-> (navigator/discover address)
                       (navigator/get :products))
         resource (navigator/resource navigator)]

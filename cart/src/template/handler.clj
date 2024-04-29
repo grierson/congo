@@ -1,6 +1,6 @@
 (ns template.handler
   (:require
-   [template.aggregate.route :as aggregate]
+   [template.cart.route :as cart]
    [template.event.route :as event]
    [muuntaja.core :as m]
    [reitit.coercion.malli :as mcoercion]
@@ -15,7 +15,7 @@
   [discovery/route
    health/route
    (event/route dependencies)
-   (aggregate/route dependencies)])
+   (cart/route dependencies)])
 
 (defn make-router [routes]
   (ring/router

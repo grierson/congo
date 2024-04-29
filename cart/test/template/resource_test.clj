@@ -7,8 +7,7 @@
    [next.jdbc :as jdbc]
    [placid-fish.core :as uris]
    [template.helper :as helper]
-   [template.system]
-   [halboy.resource :as resource]))
+   [template.system]))
 
 (require 'hashp.core)
 
@@ -59,15 +58,15 @@
         (is (uris/absolute? events-href))
         (is (uris/ends-with? events-href "/events{?start,end}"))))
 
-    (testing "has aggregate link"
-      (let [aggregate-href (hal/get-href resource :aggregate)]
-        (is (uris/absolute? aggregate-href))
-        (is (uris/ends-with? aggregate-href "/aggregate/{id}"))))
+    (testing "has cart link"
+      (let [cart-href (hal/get-href resource :cart)]
+        (is (uris/absolute? cart-href))
+        (is (uris/ends-with? cart-href "/cart/{id}"))))
 
-    (testing "has aggregates link"
-      (let [aggregates-href (hal/get-href resource :aggregates)]
-        (is (uris/absolute? aggregates-href))
-        (is (uris/ends-with? aggregates-href "/aggregates"))))))
+    (testing "has carts link"
+      (let [carts-href (hal/get-href resource :carts)]
+        (is (uris/absolute? carts-href))
+        (is (uris/ends-with? carts-href "/carts"))))))
 
 (deftest health-test
   (let [{:keys [address]} (extract @test-system)
@@ -108,55 +107,55 @@
   (let [{:keys [address]} (extract @test-system)
         name "alice"
         _  (-> (navigator/discover address)
-               (navigator/post :aggregates {:name name}))
+               (navigator/post :carts {:name name}))
         navigator (-> (navigator/discover address)
                       (navigator/get :events))
         resource (navigator/resource navigator)
-        events (resource/get-resource resource :events)
+        events (hal/get-resource resource :events)
         first-event (first events)
 
-        first-event-href (resource/get-href first-event :self)
+        first-event-href (hal/get-href first-event :self)
         event-navigator (navigator/discover first-event-href)
         event-resource (navigator/resource event-navigator)]
     (testing "Calling GET returns 200"
       (is (= 200 (navigator/status event-navigator))))
     (testing "properties"
       (is (= name (hal/get-property event-resource :name)))
-      (is (= "aggregate-created" (hal/get-property event-resource :type))))))
+      (is (= "cart-created" (hal/get-property event-resource :type))))))
 
-(deftest post-aggregates-test
+(deftest post-carts-test
   (let [{:keys [address]} (extract @test-system)
         name "alice"
         navigator (-> (navigator/discover address {:follow-redirects false})
-                      (navigator/post :aggregates {:name name}))
+                      (navigator/post :carts {:name name}))
         resource  (navigator/resource navigator)]
     (testing "Calling POST returns 201"
       (is (= 201 (navigator/status navigator))))
     (testing "properties"
       (is (= name (hal/get-property resource :name))))))
 
-(deftest get-aggregate-test
+(deftest get-cart-test
   (let [{:keys [address]} (extract @test-system)
         name "alice"
         navigator  (-> (navigator/discover address)
-                       (navigator/post :aggregates {:name name}))
+                       (navigator/post :carts {:name name}))
         resource (navigator/resource navigator)]
     (testing "Calling GET returns 200"
       (is (= 200 (navigator/status navigator))))
     (testing "properties"
       (is (= name (hal/get-property resource :name))))))
 
-(deftest get-aggregates-test
+(deftest get-carts-test
   (let [{:keys [address]} (extract @test-system)
         [name1 name2] ["alice" "bob"]
         _ (-> (navigator/discover address)
-              (navigator/post :aggregates {:name name1}))
+              (navigator/post :carts {:name name1}))
         _ (-> (navigator/discover address)
-              (navigator/post :aggregates {:name name2}))
+              (navigator/post :carts {:name name2}))
         navigator (-> (navigator/discover address)
-                      (navigator/get :aggregates))
+                      (navigator/get :carts))
         resource (navigator/resource navigator)]
     (testing "returns 200"
       (is (= 200 (navigator/status navigator))))
     (testing "properties"
-      (is (= 2 (count (hal/get-property resource :aggregates)))))))
+      (is (= 2 (count (hal/get-property resource :carts)))))))

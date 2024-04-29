@@ -14,8 +14,8 @@
                 {:health (urls/url-for router request :health)
                  :event (str (urls/url-for router request :event) {:id "{id}"})
                  :events (str (urls/url-for router request :events) "{?start,end}")
-                 :aggregate (urls/url-for router request :aggregate {:id "{id}"})
-                 :aggregates (urls/url-for router request :aggregates)})
+                 :cart (urls/url-for router request :cart {:id "{id}"})
+                 :carts (urls/url-for router request :carts)})
                (haljson/resource->json))}))
 
 (def route ["/" {:name :discovery

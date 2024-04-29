@@ -1,0 +1,56 @@
+{:paths ["bb"]
+
+ :deps
+ {org.clojars.lispyclouds/contajners {:mvn/version "1.0.5"}}
+
+ :tasks
+ {clj:repl
+  {:doc "Start repl"
+   :task (shell "clojure -M:repl")}
+
+  bb:repl
+  {:doc "bb nrepl server"
+   :task (shell "bb nrepl-server")}
+
+  test
+  {:doc "Run tests"
+   :task (shell "./bin/kaocha")}
+
+  test:watch
+  {:doc "Run tests watch mode"
+   :task (shell "./bin/kaocha --watch")}
+
+  uber:build
+  {:doc "Build uber"
+   :task (shell "clojure -T:build uber")}
+
+  uber:run
+  {:doc "Run uber"
+   :task (shell "java -jar target/app-standalone.jar")}
+
+  start
+  {:doc "Run locally"
+   :task (shell "clojure -M -m template.core")}
+
+  docker:build
+  {:doc "Build image"
+   :task (shell "docker build --tag shopping-cart .")}
+
+  docker:run
+  {:doc "Run container"
+   :task (shell "docker run --rm -p 5000:80 shopping-cart")}
+
+  k8:apply
+  {:doc "Run k8"
+   :task (shell "kubectl apply -f manifests/")}
+
+  k8:delete
+  {:doc "Stop k8"
+   :task (shell "kubectl delete -f manifests/")}
+
+  k8:show
+  {:doc "Show k8 details"
+   :task (do
+           (shell "kubectl get pods")
+           (shell "kubectl get deployments")
+           (shell "kubectl get services"))}}}

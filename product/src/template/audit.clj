@@ -50,6 +50,13 @@
 (defn get-event [database id]
   (sql/get-by-id database :events id jdbc/snake-kebab-opts))
 
+(defn get-projections-by-id
+  [database ids]
+  (jdbc/execute!
+   database
+   ["SELECT * FROM projections WHERE (data->>'sku')::integer = ANY(?)" (int-array ids)]
+   jdbc/snake-kebab-opts))
+
 (defn get-projection [database id]
   (sql/get-by-id database :projections id jdbc/snake-kebab-opts))
 

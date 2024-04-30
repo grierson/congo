@@ -184,3 +184,32 @@
       (is (= 200 (navigator/status navigator))))
     (testing "properties"
       (is (= 2 (count (hal/get-property resource :products)))))))
+
+(deftest get-products-by-sku-test
+  (let [{:keys [address]} (extract @test-system)
+        product1 {:sku 1
+                  :name "pants"
+                  :description "two legs"
+                  :price 10}
+        product2 {:sku 2
+                  :name "shirt"
+                  :description "two sleves"
+                  :price 20}
+        product3 {:sku 3
+                  :name "shoes"
+                  :description "two shoes"
+                  :price 40}
+        _ (-> (navigator/discover address)
+              (navigator/post :products product1))
+        _ (-> (navigator/discover address)
+              (navigator/post :products product2))
+        _ (-> (navigator/discover address)
+              (navigator/post :products product3))
+        navigator   (-> (navigator/discover address)
+                        (navigator/get :products {:skus [(:sku product2)
+                                                         (:sku product3)]}))
+        resource  (navigator/resource navigator)]
+    (testing "returns 200"
+      (is (= 200 (navigator/status navigator))))
+    (testing "properties"
+      (is (= 2 (count (hal/get-property resource :products)))))))

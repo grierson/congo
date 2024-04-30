@@ -1,10 +1,11 @@
 (ns template.product.route
   (:require
+   [clojure.pprint :as pprint]
    [halboy.json :as haljson]
    [halboy.resource :as resource]
    [reitit.core :as reitit]
-   [template.product.projection :as projection]
    [template.audit :as audit]
+   [template.product.projection :as projection]
    [template.resources.urls :as urls]))
 
 (defn get-handler [{:keys [database]} request]
@@ -19,9 +20,12 @@
                (resource/add-properties product)
                (haljson/resource->json))}))
 
+(require 'hashp.core)
+
 (defn list-handler [{:keys [database]} request]
   (let [{::reitit/keys [router]} request
-        projections (audit/get-projections database)
+        skus  (get-in request [:parameters :query :skus])
+        projections (audit/get-projections-by-id database skus)
         self-url (urls/url-for router request :products)]
     {:status 200
      :body (-> (resource/new-resource self-url)
@@ -53,7 +57,8 @@
            :handler (partial get-handler dependencies)}}]
    ["/products"
     {:name :products
-     :get {:handler (partial list-handler dependencies)}
+     :get {:parameters {:query [:map [:skus {:optional true} [:vector int?]]]}
+           :handler (partial list-handler dependencies)}
      :post {:parameters {:body [:map
                                 [:sku int?]
                                 [:name string?]

@@ -32,9 +32,10 @@
 
 (defn create-handler [{:keys [database]} request]
   (let [{::reitit/keys [router]} request
-        {{{:keys [name description price]} :body} :parameters} request
+        {{{:keys [sku name description price]} :body} :parameters} request
         {:keys [:projections/id :projections/data]}
-        (projection/create-projection! database {:name name
+        (projection/create-projection! database {:sku sku
+                                                 :name name
                                                  :description description
                                                  :price price})
         self-url (urls/url-for router request :product {:id id})]
@@ -54,6 +55,7 @@
     {:name :products
      :get {:handler (partial list-handler dependencies)}
      :post {:parameters {:body [:map
+                                [:sku int?]
                                 [:name string?]
                                 [:description string?]
                                 [:price int?]]}

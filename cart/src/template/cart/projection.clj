@@ -2,8 +2,7 @@
   (:require
    [template.audit :as audit]
    [template.database.postgres]
-   [tick.core :as tick]
-   [template.cart.projection :as projection]))
+   [tick.core :as tick]))
 
 (defn cart-created-event
   [{:keys [id stream-id timestamp data]

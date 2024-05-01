@@ -18,4 +18,4 @@
   (b/uber {:class-dir class-dir
            :uber-file uber-file
            :basis basis
-           :main 'shopping-cart.core}))
+           :main 'template.core}))

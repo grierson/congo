@@ -12,14 +12,14 @@
   (println "running...")
   (let [system (ds/start ::helper/test)
         database (get-in system [::ds/instances :components :database])]
-    (audit/raise-event database (projection/product-created-event {:data {:sku 1
-                                                                          :name "shirt"
-                                                                          :description "two sleves"
-                                                                          :price 10}}))
-    (audit/raise-event database (projection/product-created-event {:data {:sku 2
-                                                                          :name "pants"
-                                                                          :description "two legs"
-                                                                          :price 20}}))))
+    (projection/create-projection! database {:sku 1
+                                             :name "shirt"
+                                             :description "two sleves"
+                                             :price 10})
+    (projection/create-projection! database {:sku 2
+                                             :name "pants"
+                                             :description "two legs"
+                                             :price 20})))
 
 (comment
   (def system (ds/start ::helper/test))

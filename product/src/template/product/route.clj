@@ -25,7 +25,10 @@
 (defn list-handler [{:keys [database]} request]
   (let [{::reitit/keys [router]} request
         skus  (get-in request [:parameters :query :skus])
-        projections (audit/get-projections-by-id database skus)
+        projections
+        (if (nil? skus)
+          (audit/get-projections database)
+          (audit/get-projections-by-id database skus))
         self-url (urls/url-for router request :products)]
     {:status 200
      :body (-> (resource/new-resource self-url)

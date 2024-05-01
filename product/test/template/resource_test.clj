@@ -7,7 +7,8 @@
    [next.jdbc :as jdbc]
    [placid-fish.core :as uris]
    [template.helper :as helper]
-   [template.system]))
+   [template.system]
+   [clojure.pprint :as pprint]))
 
 (require 'hashp.core)
 
@@ -205,11 +206,11 @@
               (navigator/post :products product2))
         _ (-> (navigator/discover address)
               (navigator/post :products product3))
-        navigator   (-> (navigator/discover address)
-                        (navigator/get :products {:skus [(:sku product2)
-                                                         (:sku product3)]}))
-        resource  (navigator/resource navigator)]
+        navigator (-> (navigator/discover address)
+                      (navigator/get :products {:skus [(:sku product2)
+                                                       (:sku product3)]}))
+        resource (navigator/resource navigator)]
     (testing "returns 200"
       (is (= 200 (navigator/status navigator))))
     (testing "properties"
-      (is (= 2 (count (hal/get-property resource :products)))))))
+      (is (= 2 (count #p (hal/get-property resource :products)))))))

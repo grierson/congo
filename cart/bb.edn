@@ -29,10 +29,6 @@
    :task (shell "java -jar target/app-standalone.jar")}
 
   start
-  {:doc "Run"
-   :task (shell "clojure -M -m template.core --help")}
-
-  dev
   {:doc "Run locally"
    :task (shell "clojure -M -m template.core")}
 

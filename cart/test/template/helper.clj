@@ -18,6 +18,37 @@
                                     :startup-timeout 10}})]
     (tc/start! test-container)))
 
+(defmethod ds/named-system ::local
+  [_]
+  (let [{:keys [database] :as env} (system/env-config :development)
+
+        postgres-container
+        (make-postgres-testcontainer
+         (select-keys database [:image :password :port]))
+
+        postgres-container-port
+        (get (:mapped-ports postgres-container) (:port database))
+
+        db-spec (merge database {:port postgres-container-port})
+        datasource (jdbc/get-datasource db-spec)
+        _ (audit/make-tables datasource)
+
+        database {:database {:port postgres-container-port}}
+
+        db-component
+        #::ds{:start (fn [_] postgres-container)
+              :stop (fn [{:keys [::ds/instance]}] (tc/stop! instance))}
+
+        env-config (merge-with into
+                               env
+                               database)
+
+        _ (println "running on: " (get-in env [:webserver :port]))
+
+        config {[:env] env-config
+                [:test :database] db-component}]
+    (ds/system ::system/base config)))
+
 (defmethod ds/named-system ::test
   [_]
   (let [{:keys [database] :as env} (system/env-config :development)

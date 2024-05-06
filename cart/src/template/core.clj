@@ -21,5 +21,4 @@
 
 (defn -main
   [& args]
-  (parse-opts args cli-options)
-  #_(ds/start ::helper/test))
+  (ds/start ::helper/local))

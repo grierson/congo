@@ -12,7 +12,7 @@
      :body (-> (resource/new-resource self-url)
                (resource/add-links
                 {:health (urls/url-for router request :health)
-                 :event (str (urls/url-for router request :event) {:id "{id}"})
+                 :event (urls/url-for router request :event {:id "{id}"})
                  :events (str (urls/url-for router request :events) "{?start,end}")
                  :cart (urls/url-for router request :cart {:id "{id}"})
                  :carts (urls/url-for router request :carts)})

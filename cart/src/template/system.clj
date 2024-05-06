@@ -5,7 +5,7 @@
    [donut.system :as ds]
    [donut.system.repl :as dsr]
    [next.jdbc :as jdbc]
-   [ring.adapter.jetty :as rj]
+   [org.httpkit.server :as hk-server]
    [template.handler :as handler]))
 
 (defn env-config
@@ -32,9 +32,9 @@
 
      :server
      #::ds{:start (fn [{{:keys [handler options]} ::ds/config}]
-                    (rj/run-jetty handler options))
+                    (hk-server/run-server handler options))
            :stop  (fn [{:keys [::ds/instance]}]
-                    (.stop instance))
+                    (instance))
            :config  {:handler (ds/local-ref [:handler])
                      :options {:port (ds/ref [:env :webserver :port])
                                :join? false}}}}}})

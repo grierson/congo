@@ -1,4 +1,4 @@
-FROM clojure:temurin-17-alpine
+FROM clojure:latest
 
 WORKDIR /app
 
@@ -10,6 +10,6 @@ COPY resources/ ./resources/
 
 RUN clojure -T:build uber
 
-EXPOSE 80
+EXPOSE 8080
 
 ENTRYPOINT java -jar target/app-standalone.jar

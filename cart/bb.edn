@@ -28,6 +28,11 @@
   {:doc "Run uber"
    :task (shell "java -jar target/app-standalone.jar")}
 
+  uber
+  {:doc "Uber build and run"
+   :depends [uber:build uber:run]
+   :task (println "running uberjar")}
+
   start
   {:doc "Run locally"
    :task (shell "clojure -M -m template.core")}
@@ -38,19 +43,4 @@
 
   docker:run
   {:doc "Run container"
-   :task (shell "docker run --rm -p 5000:80 cart")}
-
-  k8:apply
-  {:doc "Run k8"
-   :task (shell "kubectl apply -f manifests/")}
-
-  k8:delete
-  {:doc "Stop k8"
-   :task (shell "kubectl delete -f manifests/")}
-
-  k8:show
-  {:doc "Show k8 details"
-   :task (do
-           (shell "kubectl get pods")
-           (shell "kubectl get deployments")
-           (shell "kubectl get services"))}}}
+   :task (shell "docker run --rm -p 5000:8080 cart")}}}

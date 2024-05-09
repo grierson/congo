@@ -1,0 +1,13 @@
+[source,bash]
+----
+k3d cluster create mycluster -p "8082:80@loadbalancer" --agents 2
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl apply -f ingress.yaml
+----
+
+[mermaid]
+----
+flowchart TD
+    Ingress --> Service(Service - ClusterIP) --> Deployment(Deployment - basic web server container)
+----

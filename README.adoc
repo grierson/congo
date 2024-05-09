@@ -1,0 +1,6 @@
+# Sample project
+
+Basic online shopping service to practice k8
+
+* Clojure
+* Kubernetes (k3d)
